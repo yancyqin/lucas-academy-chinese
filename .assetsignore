@@ -1,7 +1,10 @@
 .git
 .git/**
+.wrangler
+.wrangler/**
 .DS_Store
 .assetsignore
+.gitignore
 CLAUDE.md
 README.md
 serve.py
