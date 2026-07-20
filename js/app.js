@@ -1,7 +1,7 @@
 import { speak, stop } from './speech.js?v=1';
 import lessons from '../lessons/index.js?v=1';
 
-const PUNCT_RE = /^[，。、：；？！…—─（）《》""'',.!?;:()\-\s]+$/;
+const PUNCT_RE = /^[，。、：；？！…—─（）《》「」『』""'',.!?;:()\-\s]+$/;
 
 const tabsEl = document.getElementById('tabs');
 const contentEl = document.getElementById('content');
