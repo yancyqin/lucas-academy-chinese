@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>中文阅读 · Lucas Academy</title>
+<link rel="stylesheet" href="css/style.css?v=1">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">📖 中文阅读<span class="brand-sub">Lucas Academy Chinese</span></div>
+  <nav id="tabs" class="tabs"></nav>
+</header>
+
+<main id="content" class="content"></main>
+
+<aside id="panel" class="panel" aria-live="polite">
+  <button id="panel-close" class="panel-close" title="关闭">✕</button>
+  <div class="panel-top">
+    <span id="panel-word" class="panel-word"></span>
+    <span id="panel-pinyin" class="panel-pinyin"></span>
+    <span class="panel-buttons">
+      <button id="btn-say" class="say">🔊 读一遍</button>
+      <button id="btn-slow" class="say">🐢 慢一点</button>
+    </span>
+  </div>
+  <p id="panel-meaning" class="panel-meaning"></p>
+  <p id="panel-usage" class="panel-usage"></p>
+  <div class="panel-sentence-row">
+    <button id="btn-sentence" class="say">🔊 整句</button>
+    <span id="panel-sentence" class="panel-sentence"></span>
+  </div>
+</aside>
+
+<script type="module" src="js/app.js?v=1"></script>
+</body>
+</html>
