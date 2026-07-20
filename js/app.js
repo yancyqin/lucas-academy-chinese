@@ -92,7 +92,7 @@ function renderLesson(lesson) {
     para.verses.forEach(v => {
       const row = el('div', 'verse');
       const play = el('button', 'verse-play', '🔊');
-      play.title = '读整节';
+      play.title = 'Play verse';
       play.addEventListener('click', () => speak(v.tokens.join(''), 0.85));
 
       const text = el('span', 'verse-text');
@@ -140,6 +140,6 @@ lessons.forEach(lesson => {
   pill.addEventListener('click', () => selectLesson(lesson.id));
   tabsEl.append(pill);
 });
-tabsEl.append(el('span', 'tab soon', '下一课 · soon'));
+tabsEl.append(el('span', 'tab soon', 'Next · soon'));
 
 selectLesson(location.hash.slice(1));

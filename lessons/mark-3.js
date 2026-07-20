@@ -3,7 +3,7 @@
 // artPrompt: kept as data for generating the paragraph illustration later.
 export default {
   id: 'mark-3',
-  tabTitle: '马可福音 3',
+  tabTitle: 'Mark 3',
   title: '马可福音 3:1–19',
   subtitle: '和合本（神版） · Mark 3:1–19',
 
