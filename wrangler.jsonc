@@ -1,0 +1,14 @@
+{
+  "name": "lucas-academy-chinese",
+  "compatibility_date": "2026-07-20",
+  "assets": {
+    "directory": ".",
+    "not_found_handling": "404-page"
+  },
+  "routes": [
+    {
+      "pattern": "chinese.lucasacademy.org",
+      "custom_domain": true
+    }
+  ]
+}

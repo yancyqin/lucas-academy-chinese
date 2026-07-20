@@ -14,6 +14,14 @@ python3 serve.py 8099
 
 Static site, no build step, no dependencies.
 
+## Deploy
+
+```bash
+npx wrangler deploy
+```
+
+Production: <https://chinese.lucasacademy.org>
+
 ## Adding a lesson
 
 1. Copy `lessons/mark-3.js` to `lessons/<id>.js` and fill in:

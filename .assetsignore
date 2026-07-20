@@ -1,0 +1,8 @@
+.git
+.git/**
+.DS_Store
+.assetsignore
+CLAUDE.md
+README.md
+serve.py
+wrangler.jsonc
