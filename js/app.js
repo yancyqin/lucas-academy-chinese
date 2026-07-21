@@ -1,5 +1,5 @@
 import { speak, stop } from './speech.js?v=1';
-import lessons from '../lessons/index.js?v=1';
+import lessons from '../lessons/index.js?v=2';
 
 const PUNCT_RE = /^[，。、：；？！…—─（）《》「」『』""'',.!?;:()\-\s]+$/;
 
@@ -80,13 +80,26 @@ function renderLesson(lesson) {
   lesson.paragraphs.forEach(para => {
     const sec = el('section', 'para');
 
-    // reserved slot for a future AI illustration of this paragraph
-    const art = el('div', 'para-art');
-    art.append(
-      el('div', 'para-art-icon', '🎨'),
-      el('div', 'para-art-caption', para.artCaption),
-      el('div', 'para-art-note', 'AI 插图位置 · illustration coming soon'),
-    );
+    const art = document.createElement('figure');
+    art.className = 'para-art';
+    if (para.artImage) {
+      const image = document.createElement('img');
+      image.className = 'para-art-image';
+      image.src = para.artImage;
+      image.alt = para.artAlt || para.artCaption;
+      image.loading = 'lazy';
+      image.decoding = 'async';
+      art.append(image);
+    } else {
+      art.append(
+        el('div', 'para-art-icon', '🎨'),
+        el('div', 'para-art-note', 'AI 插图位置 · illustration coming soon'),
+      );
+    }
+    const caption = document.createElement('figcaption');
+    caption.className = 'para-art-caption';
+    caption.textContent = para.artCaption;
+    art.append(caption);
     sec.append(art);
 
     para.verses.forEach(v => {

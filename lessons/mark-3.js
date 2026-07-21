@@ -11,6 +11,8 @@ export default {
     {
       id: 'p1',
       artCaption: '安息日治病 · Healing on the Sabbath (v.1–6)',
+      artImage: 'assets/illustrations/mark-3-01-06.jpg',
+      artAlt: '耶稣在会堂中医治手枯干的人，旁边有人安静观看。',
       artPrompt:
         'Warm watercolor storybook illustration, no text: inside an ancient stone synagogue, ' +
         'Jesus stands beside a man stretching out his withered hand, which is being restored; ' +
@@ -27,6 +29,8 @@ export default {
     {
       id: 'p2',
       artCaption: '海边的人群 · Crowds by the sea (v.7–12)',
+      artImage: 'assets/illustrations/mark-3-07-12.jpg',
+      artAlt: '耶稣在加利利海边，众人从四方来到，岸边有一只小船。',
       artPrompt:
         'Warm watercolor storybook illustration, no text: Jesus and his disciples by the Sea of Galilee, ' +
         'huge crowds arriving from every direction, a small boat waiting near the shore, ' +
@@ -43,6 +47,8 @@ export default {
     {
       id: 'p3',
       artCaption: '山上设立十二使徒 · Choosing the Twelve (v.13–19)',
+      artImage: 'assets/illustrations/mark-3-13-19.jpg',
+      artAlt: '耶稣在山坡上和十二位门徒坐在一起。',
       artPrompt:
         'Warm watercolor storybook illustration, no text: Jesus on a green mountain calling twelve men ' +
         'to himself; the twelve gathered around him under a bright sky. Kid-friendly.',

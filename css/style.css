@@ -86,26 +86,39 @@ body {
   margin-bottom: 28px;
 }
 
-/* AI illustration placeholder */
+/* Paragraph illustrations */
 .para-art {
-  border: 2px dashed #d8c7a5;
+  margin: 0 0 14px;
+  overflow: hidden;
   border-radius: 16px;
   background: #faf3e3;
-  padding: 26px 16px;
+  border: 1px solid #e1d4bd;
   text-align: center;
-  margin-bottom: 14px;
+  box-shadow: 0 5px 18px #80683218;
 }
 
-.para-art-icon { font-size: 2rem; }
+.para-art-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.para-art-icon {
+  display: block;
+  padding: 26px 16px 0;
+  font-size: 2rem;
+}
 
 .para-art-caption {
-  margin-top: 6px;
+  padding: 9px 13px 10px;
   font-weight: 600;
   color: #6b5433;
+  background: #fffdf8;
 }
 
 .para-art-note {
-  margin-top: 2px;
+  padding: 2px 16px 26px;
   font-size: 0.8rem;
   color: #b7a687;
 }
