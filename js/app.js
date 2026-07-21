@@ -1,7 +1,9 @@
 import { speak, stop } from './speech.js?v=1';
-import lessons from '../lessons/index.js?v=2';
+import lessons from '../lessons/index.js?v=3';
 
 const PUNCT_RE = /^[，。、：；？！…—─（）《》「」『』""'',.!?;:()\-\s]+$/;
+const PINYIN_STORAGE_KEY = 'lucas-academy-chinese.pinyin-visible';
+const HIGHLIGHTS_STORAGE_KEY = 'lucas-academy-chinese.highlighted-words';
 
 const tabsEl = document.getElementById('tabs');
 const contentEl = document.getElementById('content');
@@ -12,16 +14,58 @@ const panelPinyin = document.getElementById('panel-pinyin');
 const panelMeaning = document.getElementById('panel-meaning');
 const panelUsage = document.getElementById('panel-usage');
 const panelSentence = document.getElementById('panel-sentence');
+const pinyinToggle = document.getElementById('pinyin-toggle');
+const highlightButton = document.getElementById('btn-highlight');
+const unhighlightButton = document.getElementById('btn-unhighlight');
 
 let activeLesson = null;
 let selectedSpan = null;
 let current = null; // { word, sentence }
+let highlightedWords = readHighlights();
+
+function readHighlights() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(HIGHLIGHTS_STORAGE_KEY) || '[]');
+    return new Set(Array.isArray(saved) ? saved.filter(item => typeof item === 'string') : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveHighlights() {
+  try {
+    localStorage.setItem(HIGHLIGHTS_STORAGE_KEY, JSON.stringify([...highlightedWords]));
+  } catch {
+    // Reading still works if a browser has local storage disabled.
+  }
+}
+
+function setPinyinVisible(visible) {
+  document.body.classList.toggle('show-pinyin', visible);
+  pinyinToggle.checked = visible;
+  try {
+    localStorage.setItem(PINYIN_STORAGE_KEY, String(visible));
+  } catch {
+    // Keep the current page setting even if it cannot be persisted.
+  }
+}
+
+function restorePinyinPreference() {
+  try {
+    setPinyinVisible(localStorage.getItem(PINYIN_STORAGE_KEY) === 'true');
+  } catch {
+    setPinyinVisible(false);
+  }
+}
 
 // ---------- word panel ----------
 document.getElementById('panel-close').addEventListener('click', closePanel);
 document.getElementById('btn-say').addEventListener('click', () => current && speak(current.word, 0.9));
 document.getElementById('btn-slow').addEventListener('click', () => current && speak(current.word, 0.5));
 document.getElementById('btn-sentence').addEventListener('click', () => current && speak(current.sentence, 0.85));
+pinyinToggle.addEventListener('change', () => setPinyinVisible(pinyinToggle.checked));
+highlightButton.addEventListener('click', () => current && setWordHighlight(current.word, true));
+unhighlightButton.addEventListener('click', () => current && setWordHighlight(current.word, false));
 
 function closePanel() {
   panelEl.classList.remove('open');
@@ -29,6 +73,26 @@ function closePanel() {
   selectedSpan = null;
   current = null;
   stop();
+}
+
+function syncHighlightButtons() {
+  const isHighlighted = Boolean(current && highlightedWords.has(current.word));
+  highlightButton.hidden = isHighlighted;
+  unhighlightButton.hidden = !isHighlighted;
+}
+
+function setWordHighlight(word, shouldHighlight) {
+  if (shouldHighlight) {
+    highlightedWords.add(word);
+  } else {
+    highlightedWords.delete(word);
+  }
+  saveHighlights();
+
+  document.querySelectorAll('.word').forEach(button => {
+    if (button.dataset.word === word) button.classList.toggle('highlighted', shouldHighlight);
+  });
+  syncHighlightButtons();
 }
 
 function showWord(span, word, verseTokens, tokenIndex) {
@@ -55,6 +119,7 @@ function showWord(span, word, verseTokens, tokenIndex) {
   });
 
   current = { word, sentence: verseTokens.join('') };
+  syncHighlightButtons();
   panelEl.classList.add('open');
   speak(word, 0.9);
 }
@@ -113,7 +178,15 @@ function renderLesson(lesson) {
         if (PUNCT_RE.test(tok)) {
           text.append(el('span', 'punct', tok));
         } else {
-          const w = el('button', 'word', tok);
+          const w = el('button', 'word');
+          const entry = lesson.dict[tok];
+          w.dataset.word = tok;
+          w.setAttribute('aria-label', entry ? `${tok}，${entry.pinyin}` : tok);
+          if (highlightedWords.has(tok)) w.classList.add('highlighted');
+          w.append(
+            el('span', 'word-pinyin', entry ? entry.pinyin : ''),
+            el('span', 'word-text', tok),
+          );
           w.addEventListener('click', () => showWord(w, tok, v.tokens, i));
           text.append(w);
         }
@@ -155,4 +228,5 @@ lessons.forEach(lesson => {
 });
 tabsEl.append(el('span', 'tab soon', 'Next · soon'));
 
+restorePinyinPreference();
 selectLesson(location.hash.slice(1));

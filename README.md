@@ -14,6 +14,11 @@ python3 serve.py 8099
 
 Static site, no build step, no dependencies.
 
+## Reading controls
+
+- Turn on **拼音** in the page header to show pinyin above every word. The preference is remembered on the device.
+- Tap a word, then choose **Mark** or **Unmark** in its word panel. Marked vocabulary stays highlighted across lessons and is saved in the browser’s local storage.
+
 ## Deploy
 
 ```bash

@@ -1,5 +1,5 @@
 // 马可福音 3:20–35 · 和合本（神版）
-import mark3 from './mark-3.js?v=2';
+import mark3 from './mark-3.js?v=3';
 
 export default {
   id: 'mark-3-20-35',

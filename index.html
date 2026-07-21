@@ -4,12 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>中文阅读 · Lucas Academy</title>
-<link rel="stylesheet" href="css/style.css?v=2">
+<link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
 
 <header class="top">
   <div class="brand">📖 中文阅读<span class="brand-sub">Lucas Academy Chinese</span></div>
+  <label class="pinyin-toggle" for="pinyin-toggle">
+    <input id="pinyin-toggle" type="checkbox">
+    <span>拼音</span>
+  </label>
   <nav id="tabs" class="tabs"></nav>
 </header>
 
@@ -24,6 +28,10 @@
       <button id="btn-say" class="say">🔊 Play</button>
       <button id="btn-slow" class="say">🐢 Slower</button>
     </span>
+    <span class="panel-buttons panel-mark-buttons">
+      <button id="btn-highlight" class="mark-action">⭐ Mark</button>
+      <button id="btn-unhighlight" class="mark-action" hidden>✕ Unmark</button>
+    </span>
   </div>
   <p id="panel-meaning" class="panel-meaning"></p>
   <p id="panel-usage" class="panel-usage"></p>
@@ -33,6 +41,6 @@
   </div>
 </aside>
 
-<script type="module" src="js/app.js?v=2"></script>
+<script type="module" src="js/app.js?v=3"></script>
 </body>
 </html>
