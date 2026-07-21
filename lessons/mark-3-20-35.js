@@ -7,6 +7,13 @@ export default {
   title: '马可福音 3:20–35',
   subtitle: '和合本（神版） · Mark 3:20–35',
 
+  // Teacher-selected vocabulary for this passage. These seed the Wordbook;
+  // student-marked (⭐) words are added to it automatically (duplicates removed).
+  vocab: [
+    '聚集', '甚至', '顾不得', '亲属', '癫狂', '附着', '自相', '纷争',
+    '站立不住', '壮士', '抢夺', '家具', '捆住', '亵渎', '赦免', '担当',
+  ],
+
   paragraphs: [
     {
       id: 'p1',

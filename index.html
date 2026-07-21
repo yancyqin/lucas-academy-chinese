@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>中文阅读 · Lucas Academy</title>
-<link rel="stylesheet" href="css/style.css?v=4">
+<link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
 
@@ -17,7 +17,17 @@
   <nav id="tabs" class="tabs"></nav>
 </header>
 
-<main id="content" class="content"></main>
+<div class="layout">
+  <main id="content" class="content"></main>
+  <aside id="wordbook" class="wordbook" hidden>
+    <div class="wordbook-head">
+      <h2 class="wordbook-title">生词本 · Wordbook</h2>
+      <span id="wordbook-count" class="wordbook-count">0</span>
+    </div>
+    <p class="wordbook-sub">老师的生词 + 你标 ⭐ 的词</p>
+    <div id="wordbook-list" class="wordbook-list"></div>
+  </aside>
+</div>
 
 <aside id="panel" class="panel" aria-live="polite">
   <button id="panel-close" class="panel-close" title="Close">✕</button>
@@ -44,6 +54,6 @@
   </div>
 </aside>
 
-<script type="module" src="js/app.js?v=4"></script>
+<script type="module" src="js/app.js?v=5"></script>
 </body>
 </html>

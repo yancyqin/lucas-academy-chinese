@@ -1,5 +1,5 @@
 import { speak, speakSequence, stop } from './speech.js?v=4';
-import lessons from '../lessons/index.js?v=3';
+import lessons from '../lessons/index.js?v=4';
 
 const PUNCT_RE = /^[，。、：；？！…—─（）《》「」『』""'',.!?;:()\-\s]+$/;
 const PINYIN_STORAGE_KEY = 'lucas-academy-chinese.pinyin-visible';
@@ -17,6 +17,9 @@ const panelSentence = document.getElementById('panel-sentence');
 const pinyinToggle = document.getElementById('pinyin-toggle');
 const highlightButton = document.getElementById('btn-highlight');
 const unhighlightButton = document.getElementById('btn-unhighlight');
+const wordbookEl = document.getElementById('wordbook');
+const wordbookListEl = document.getElementById('wordbook-list');
+const wordbookCountEl = document.getElementById('wordbook-count');
 
 let activeLesson = null;
 let selectedSpan = null;
@@ -97,12 +100,20 @@ function setWordHighlight(word, shouldHighlight) {
     if (button.dataset.word === word) button.classList.toggle('highlighted', shouldHighlight);
   });
   syncHighlightButtons();
+  renderWordbook();
 }
 
+// Tapping a word in the text: pass the button span so it gets the selected style.
 function showWord(span, word, verseTokens, tokenIndex) {
+  openWordPanel(word, verseTokens, tokenIndex, span);
+}
+
+// Core panel opener, shared by text taps and Wordbook clicks. When verseTokens
+// is null (no sentence context) the panel just shows the word + its meaning.
+function openWordPanel(word, verseTokens, tokenIndex, span) {
   if (selectedSpan) selectedSpan.classList.remove('selected');
-  selectedSpan = span;
-  span.classList.add('selected');
+  selectedSpan = span || null;
+  if (span) span.classList.add('selected');
 
   const entry = activeLesson.dict[word];
   panelWord.textContent = word;
@@ -110,26 +121,41 @@ function showWord(span, word, verseTokens, tokenIndex) {
   panelMeaning.textContent = entry ? entry.meaning : '（词典还没有这个词）';
   panelUsage.textContent = entry && entry.usage ? entry.usage : '';
 
-  // the whole verse, with the tapped word highlighted
+  // the whole verse, with the chosen word highlighted
   panelSentence.textContent = '';
-  verseTokens.forEach((tok, i) => {
-    const node = i === tokenIndex ? document.createElement('mark') : document.createTextNode('');
-    if (i === tokenIndex) {
-      node.textContent = tok;
-      panelSentence.append(node);
-    } else {
-      panelSentence.append(tok);
-    }
-  });
+  if (verseTokens) {
+    verseTokens.forEach((tok, i) => {
+      if (i === tokenIndex) {
+        const mark = document.createElement('mark');
+        mark.textContent = tok;
+        panelSentence.append(mark);
+      } else {
+        panelSentence.append(tok);
+      }
+    });
+    current = {
+      word,
+      sentence: verseTokens.join(''),
+      words: verseTokens.filter(t => !PUNCT_RE.test(t)),
+    };
+  } else {
+    current = { word, sentence: word, words: [word] };
+  }
 
-  current = {
-    word,
-    sentence: verseTokens.join(''),
-    words: verseTokens.filter(t => !PUNCT_RE.test(t)),
-  };
   syncHighlightButtons();
   panelEl.classList.add('open');
   speak(word, 0.9);
+}
+
+// First verse occurrence of a word — gives a Wordbook entry its example sentence.
+function findFirstOccurrence(word) {
+  for (const para of activeLesson.paragraphs) {
+    for (const v of para.verses) {
+      const idx = v.tokens.indexOf(word);
+      if (idx !== -1) return { tokens: v.tokens, index: idx };
+    }
+  }
+  return null;
 }
 
 // ---------- rendering ----------
@@ -208,6 +234,55 @@ function renderLesson(lesson) {
   });
 
   warnMissingDictEntries(lesson);
+  renderWordbook();
+}
+
+// ---------- wordbook ----------
+// Shown from the 2nd lesson on: teacher's vocab + the student's ⭐ words for
+// this passage, duplicates removed. Clicking an entry opens the word panel.
+function renderWordbook() {
+  const lesson = activeLesson;
+  const teacherVocab = (lesson && lesson.vocab) || [];
+  if (!teacherVocab.length) {
+    wordbookEl.hidden = true;
+    document.body.classList.remove('has-wordbook');
+    return;
+  }
+
+  // words that actually appear in this passage
+  const inLesson = new Set();
+  lesson.paragraphs.forEach(p => p.verses.forEach(v =>
+    v.tokens.forEach(t => { if (!PUNCT_RE.test(t)) inLesson.add(t); })
+  ));
+
+  const teacher = teacherVocab.filter(w => inLesson.has(w));
+  const teacherSet = new Set(teacher);
+  const student = [...highlightedWords].filter(w => inLesson.has(w) && !teacherSet.has(w));
+  const entries = [...teacher, ...student];
+
+  wordbookListEl.textContent = '';
+  entries.forEach(word => {
+    const entry = lesson.dict[word];
+    const item = el('button', 'wordbook-item');
+    item.dataset.word = word;
+    item.append(el('span', 'wordbook-word', word));
+    const gloss = el('span', 'wordbook-gloss');
+    gloss.append(
+      el('span', 'wordbook-pinyin', entry ? entry.pinyin : ''),
+      el('span', 'wordbook-meaning', entry ? entry.meaning : ''),
+    );
+    item.append(gloss);
+    if (highlightedWords.has(word)) item.append(el('span', 'wordbook-star', '⭐'));
+    item.addEventListener('click', () => {
+      const occ = findFirstOccurrence(word);
+      openWordPanel(word, occ ? occ.tokens : null, occ ? occ.index : -1, null);
+    });
+    wordbookListEl.append(item);
+  });
+
+  wordbookCountEl.textContent = String(entries.length);
+  wordbookEl.hidden = false;
+  document.body.classList.add('has-wordbook');
 }
 
 function warnMissingDictEntries(lesson) {
