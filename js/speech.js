@@ -1,6 +1,9 @@
 // Pronunciation via the browser's built-in speech synthesis (works offline on iPad).
 let zhVoice = null;
 
+// A generation counter so a newer request cancels any paced sequence still running.
+let gen = 0;
+
 function pickVoice() {
   const voices = speechSynthesis.getVoices();
   zhVoice =
@@ -16,16 +19,47 @@ if ('speechSynthesis' in window) {
   speechSynthesis.addEventListener('voiceschanged', pickVoice);
 }
 
-export function speak(text, rate = 0.9) {
-  if (!('speechSynthesis' in window)) return;
-  speechSynthesis.cancel();
+function utter(text, rate) {
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'zh-CN';
   if (zhVoice) u.voice = zhVoice;
   u.rate = rate;
-  speechSynthesis.speak(u);
+  return u;
+}
+
+// Speak the whole text as one utterance.
+export function speak(text, rate = 0.9) {
+  if (!('speechSynthesis' in window)) return;
+  gen += 1; // cancel any running paced sequence
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utter(text, rate));
+}
+
+// Speak the parts one at a time with a silent gap between them.
+// iOS clamps very low `rate`, so the GAP is what actually makes this much
+// slower — and breaking at character/word boundaries makes each tone clear.
+export function speakSequence(parts, rate = 0.5, gapMs = 350) {
+  if (!('speechSynthesis' in window)) return;
+  gen += 1;
+  const mine = gen;
+  speechSynthesis.cancel();
+  const items = parts.filter(p => p && p.trim());
+  let i = 0;
+  const next = () => {
+    if (mine !== gen || i >= items.length) return; // superseded or finished
+    const u = utter(items[i], rate);
+    u.onend = () => {
+      if (mine !== gen) return;
+      i += 1;
+      setTimeout(next, gapMs);
+    };
+    speechSynthesis.speak(u);
+  };
+  next();
 }
 
 export function stop() {
-  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  if (!('speechSynthesis' in window)) return;
+  gen += 1;
+  speechSynthesis.cancel();
 }

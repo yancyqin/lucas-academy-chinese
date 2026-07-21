@@ -1,4 +1,4 @@
-import { speak, stop } from './speech.js?v=1';
+import { speak, speakSequence, stop } from './speech.js?v=4';
 import lessons from '../lessons/index.js?v=3';
 
 const PUNCT_RE = /^[，。、：；？！…—─（）《》「」『』""'',.!?;:()\-\s]+$/;
@@ -61,8 +61,12 @@ function restorePinyinPreference() {
 // ---------- word panel ----------
 document.getElementById('panel-close').addEventListener('click', closePanel);
 document.getElementById('btn-say').addEventListener('click', () => current && speak(current.word, 0.9));
-document.getElementById('btn-slow').addEventListener('click', () => current && speak(current.word, 0.5));
+// "Slower" reads the word one character at a time with a pause — iOS clamps the
+// speech rate, so the pause is what makes it genuinely much slower.
+document.getElementById('btn-slow').addEventListener('click', () => current && speakSequence([...current.word], 0.5, 350));
 document.getElementById('btn-sentence').addEventListener('click', () => current && speak(current.sentence, 0.85));
+// Slow whole-sentence: read the verse word by word with a pause between words.
+document.getElementById('btn-sentence-slow').addEventListener('click', () => current && speakSequence(current.words, 0.55, 300));
 pinyinToggle.addEventListener('change', () => setPinyinVisible(pinyinToggle.checked));
 highlightButton.addEventListener('click', () => current && setWordHighlight(current.word, true));
 unhighlightButton.addEventListener('click', () => current && setWordHighlight(current.word, false));
@@ -118,7 +122,11 @@ function showWord(span, word, verseTokens, tokenIndex) {
     }
   });
 
-  current = { word, sentence: verseTokens.join('') };
+  current = {
+    word,
+    sentence: verseTokens.join(''),
+    words: verseTokens.filter(t => !PUNCT_RE.test(t)),
+  };
   syncHighlightButtons();
   panelEl.classList.add('open');
   speak(word, 0.9);

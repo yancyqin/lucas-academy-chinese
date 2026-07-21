@@ -318,6 +318,15 @@ body.show-pinyin .word-pinyin { display: block; }
   padding-top: 10px;
 }
 
+.sentence-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: none;
+}
+
+.sentence-buttons .say { white-space: nowrap; }
+
 .panel-sentence {
   font-size: 1.15rem;
   line-height: 1.8;
