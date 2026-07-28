@@ -115,20 +115,22 @@ body {
   border: 1px solid #e1d4bd;
   border-radius: 16px;
   box-shadow: 0 5px 18px #80683214;
+  transition: width 0.2s ease, padding 0.2s ease;
 }
 
 .wordbook[hidden] { display: none; }
 
 .wordbook-head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: flex-end;
   gap: 8px;
 }
 
 .wordbook-title {
   font-size: 1.05rem;
   margin: 0;
+  margin-right: auto;
 }
 
 .wordbook-count {
@@ -142,6 +144,34 @@ body {
   border-radius: 999px;
   padding: 1px 7px;
 }
+
+.wordbook-minimize {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #d8c7a5;
+  border-radius: 8px;
+  background: #fff;
+  color: #6b5433;
+  font: inherit;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.wordbook-minimize:hover { background: #f7efdd; }
+
+.wordbook.minimized {
+  width: 52px;
+  padding: 8px;
+  overflow: hidden;
+}
+
+.wordbook.minimized .wordbook-head { justify-content: center; }
+.wordbook.minimized .wordbook-title,
+.wordbook.minimized .wordbook-count,
+.wordbook.minimized .wordbook-sub,
+.wordbook.minimized .wordbook-list { display: none; }
 
 .wordbook-sub {
   margin: 4px 0 12px;

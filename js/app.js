@@ -4,6 +4,7 @@ import lessons from '../lessons/index.js?v=4';
 const PUNCT_RE = /^[，。、：；？！…—─（）《》「」『』""'',.!?;:()\-\s]+$/;
 const PINYIN_STORAGE_KEY = 'lucas-academy-chinese.pinyin-visible';
 const HIGHLIGHTS_STORAGE_KEY = 'lucas-academy-chinese.highlighted-words';
+const WORDBOOK_MINIMIZED_STORAGE_KEY = 'lucas-academy-chinese.wordbook-minimized';
 
 const tabsEl = document.getElementById('tabs');
 const contentEl = document.getElementById('content');
@@ -20,11 +21,13 @@ const unhighlightButton = document.getElementById('btn-unhighlight');
 const wordbookEl = document.getElementById('wordbook');
 const wordbookListEl = document.getElementById('wordbook-list');
 const wordbookCountEl = document.getElementById('wordbook-count');
+const wordbookMinimizeButton = document.getElementById('wordbook-minimize');
 
 let activeLesson = null;
 let selectedSpan = null;
 let current = null; // { word, sentence }
 let highlightedWords = readHighlights();
+let wordbookMinimized = readWordbookMinimized();
 
 function readHighlights() {
   try {
@@ -61,6 +64,28 @@ function restorePinyinPreference() {
   }
 }
 
+function readWordbookMinimized() {
+  try {
+    return localStorage.getItem(WORDBOOK_MINIMIZED_STORAGE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function setWordbookMinimized(minimized) {
+  wordbookMinimized = minimized;
+  wordbookEl.classList.toggle('minimized', minimized);
+  wordbookMinimizeButton.textContent = minimized ? '›' : '−';
+  const label = minimized ? 'Expand Wordbook' : 'Minimize Wordbook';
+  wordbookMinimizeButton.setAttribute('aria-label', label);
+  wordbookMinimizeButton.title = label;
+  try {
+    localStorage.setItem(WORDBOOK_MINIMIZED_STORAGE_KEY, String(minimized));
+  } catch {
+    // The current page still responds if local storage is unavailable.
+  }
+}
+
 // ---------- word panel ----------
 document.getElementById('panel-close').addEventListener('click', closePanel);
 document.getElementById('btn-say').addEventListener('click', () => current && speak(current.word, 0.9));
@@ -73,6 +98,7 @@ document.getElementById('btn-sentence-slow').addEventListener('click', () => cur
 pinyinToggle.addEventListener('change', () => setPinyinVisible(pinyinToggle.checked));
 highlightButton.addEventListener('click', () => current && setWordHighlight(current.word, true));
 unhighlightButton.addEventListener('click', () => current && setWordHighlight(current.word, false));
+wordbookMinimizeButton.addEventListener('click', () => setWordbookMinimized(!wordbookMinimized));
 
 function closePanel() {
   panelEl.classList.remove('open');
@@ -282,6 +308,7 @@ function renderWordbook() {
 
   wordbookCountEl.textContent = String(entries.length);
   wordbookEl.hidden = false;
+  setWordbookMinimized(wordbookMinimized);
   document.body.classList.add('has-wordbook');
 }
 
@@ -312,4 +339,5 @@ lessons.forEach(lesson => {
 tabsEl.append(el('span', 'tab soon', 'Next · soon'));
 
 restorePinyinPreference();
+setWordbookMinimized(wordbookMinimized);
 selectLesson(location.hash.slice(1));
