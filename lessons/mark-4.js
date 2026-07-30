@@ -103,6 +103,7 @@ export default {
     {
       id: 'p1',
       artCaption: '海边的撒种比喻 · The sower by the sea (v.1–9)',
+      artImage: 'assets/illustrations/mark-4-01-09.jpg',
       artAlt: '耶稣坐在船上，在海边向岸上的人群讲撒种的比喻。',
       artPrompt: 'A bright paper-cut collage for children, no text: Jesus teaching from a small boat near the shore while families listen; a farmer scatters seeds over a path, rocky ground, thorny soil, and rich soil. Bold layered shapes, warm sun, friendly faces.',
       verses: [
@@ -120,6 +121,7 @@ export default {
     {
       id: 'p2',
       artCaption: '种子和土壤 · Explaining the seed and soils (v.10–20)',
+      artImage: 'assets/illustrations/mark-4-10-20.jpg',
       artAlt: '耶稣和门徒坐在安静的山坡上，讲解种子落在不同土壤里的意思。',
       artPrompt: 'Gentle colored-pencil illustration for children, no text: Jesus sits with the twelve disciples on a quiet hillside and explains a seed growing in four small garden patches: path, rocks, thorns, and good earth. Soft textures and thoughtful expressions.',
       verses: [
@@ -139,6 +141,7 @@ export default {
     {
       id: 'p3',
       artCaption: '灯要放在灯台上 · A lamp on its stand (v.21–25)',
+      artImage: 'assets/illustrations/mark-4-21-25.jpg',
       artAlt: '一盏小油灯放在灯台上，照亮屋子里认真聆听的孩子和大人。',
       artPrompt: 'Playful ink-and-watercolor comic panel, no text: a glowing little oil lamp on a tall lampstand lights a cozy ancient room while children and adults listen carefully. Clear expressive lines, blue night shadows, golden lamp glow.',
       verses: [
@@ -152,6 +155,7 @@ export default {
     {
       id: 'p4',
       artCaption: '种子静静生长 · The seed grows quietly (v.26–29)',
+      artImage: 'assets/illustrations/mark-4-26-29.jpg',
       artAlt: '农夫睡觉又起床，田里的种子在日夜之间渐渐长成金色的麦穗。',
       artPrompt: 'Whimsical woodblock-print style for children, no text: a farmer sleeps beneath stars, wakes under sunlight, and watches a field change from tiny sprouts to full golden grain. Rich green, indigo, and ochre, simple carved textures.',
       verses: [
@@ -164,6 +168,7 @@ export default {
     {
       id: 'p5',
       artCaption: '小小的芥菜种 · The mustard seed (v.30–34)',
+      artImage: 'assets/illustrations/mark-4-30-34.jpg',
       artAlt: '一粒小小的种子长成大大的植物，枝头有飞鸟停歇。',
       artPrompt: 'Soft clay-animation style illustration for children, no text: a tiny mustard seed in a child’s hand grows into a big leafy plant with wide branches, where small birds rest in the shade. Rounded tactile clay forms, joyful garden colors.',
       verses: [
@@ -177,6 +182,7 @@ export default {
     {
       id: 'p6',
       artCaption: '风浪平静 · Jesus calms the storm (v.35–41)',
+      artImage: 'assets/illustrations/mark-4-35-41.jpg',
       artAlt: '夜里的小船遇到暴风，耶稣吩咐风浪安静，海面恢复平静。',
       artPrompt: 'Dramatic yet reassuring gouache night painting for children, no text: a small fishing boat rises on blue waves under dark clouds; Jesus calmly raises a hand and the storm settles into a glassy moonlit sea. Expressive brushwork, hopeful warm light.',
       verses: [
