@@ -1,5 +1,5 @@
 import { speak, speakSequence, stop } from './speech.js?v=4';
-import lessons from '../lessons/index.js?v=4';
+import lessons from '../lessons/index.js?v=5';
 
 const PUNCT_RE = /^[，。、：；？！…—─（）《》「」『』""'',.!?;:()\-\s]+$/;
 const PINYIN_STORAGE_KEY = 'lucas-academy-chinese.pinyin-visible';
