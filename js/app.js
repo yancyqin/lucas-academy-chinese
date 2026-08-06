@@ -1,5 +1,5 @@
-import { speak, speakSequence, stop } from './speech.js?v=4';
-import { playRecorded, stopRecorded, verseAudioSrc } from './audio.js?v=1';
+import { speak, speakSequence, stop } from './speech.js?v=5';
+import { playRecorded, stopRecorded, verseAudioSrc } from './audio.js?v=2';
 import lessons from '../lessons/index.js?v=7';
 
 const PUNCT_RE = /^[，。、：；？！…—─（）《》「」『』""'',.!?;:()\-\s]+$/;
@@ -88,28 +88,77 @@ function setWordbookMinimized(minimized) {
 }
 
 // ---------- speaking ----------
-// Words are always synthesized; a recorded verse would drown them out, so any
-// synthesis stops the recording first.
-function say(text, rate) {
+// The verse button that is currently playing, showing ⏹ instead of 🔊. A
+// recording takes a moment to fetch, so the icon flips on the click itself —
+// that is the reader's only feedback that the tap registered.
+let playingButton = null;
+
+function initPlayButton(button, stopLabel) {
+  button.dataset.idleLabel = button.textContent;
+  button.dataset.idleTitle = button.title;
+  button.dataset.stopLabel = stopLabel;
+}
+
+function markPlaying(button) {
+  if (playingButton !== button) clearPlaying();
+  playingButton = button;
+  button.textContent = button.dataset.stopLabel;
+  button.title = 'Stop';
+  button.classList.add('playing');
+}
+
+// Put the button back. With an argument it only clears that button, so a stale
+// callback from a superseded verse cannot reset the one now playing.
+function clearPlaying(button) {
+  if (!playingButton || (button && button !== playingButton)) return;
+  playingButton.textContent = playingButton.dataset.idleLabel;
+  playingButton.title = playingButton.dataset.idleTitle;
+  playingButton.classList.remove('playing');
+  playingButton = null;
+}
+
+// Stop whatever verse is sounding, recorded or synthesized.
+function stopVerse() {
   stopRecorded();
+  stop();
+  clearPlaying();
+}
+
+// Words are always synthesized; a recorded verse would drown them out, so any
+// single-word playback stops the verse first.
+function say(text, rate) {
+  stopVerse();
   speak(text, rate);
 }
 
 function saySequence(parts, rate, gapMs) {
-  stopRecorded();
+  stopVerse();
   speakSequence(parts, rate, gapMs);
 }
 
 // Whole verse: play the recording when the lesson has one, otherwise speak it.
 // A failed download falls back to synthesis so the verse is never silent.
-function playVerse(lesson, verse) {
+function playVerse(lesson, verse, button) {
   const sentence = verse.tokens.join('');
   const src = verseAudioSrc(lesson, verse);
+  markPlaying(button);
   if (!src) {
-    say(sentence, 0.85);
+    speakVerse(sentence, button);
     return;
   }
-  playRecorded(src, () => speak(sentence, 0.85));
+  playRecorded(src, () => speakVerse(sentence, button), () => clearPlaying(button));
+}
+
+function speakVerse(sentence, button) {
+  stopRecorded();
+  markPlaying(button); // the fallback path arrives here after markPlaying already ran
+  speak(sentence, 0.85, () => clearPlaying(button));
+}
+
+// The same button starts and stops the verse.
+function toggleVerse(lesson, verse, button) {
+  if (playingButton === button) stopVerse();
+  else playVerse(lesson, verse, button);
 }
 
 // ---------- word panel ----------
@@ -118,10 +167,12 @@ document.getElementById('btn-say').addEventListener('click', () => current && sa
 // "Slower" reads the word one character at a time with a pause — iOS clamps the
 // speech rate, so the pause is what makes it genuinely much slower.
 document.getElementById('btn-slow').addEventListener('click', () => current && saySequence([...current.word], 0.5, 350));
-document.getElementById('btn-sentence').addEventListener('click', () => {
+const sentenceButton = document.getElementById('btn-sentence');
+initPlayButton(sentenceButton, '⏹ Stop');
+sentenceButton.addEventListener('click', () => {
   if (!current) return;
   // current.verse is null only for a Wordbook word that this lesson never uses.
-  if (current.verse) playVerse(activeLesson, current.verse);
+  if (current.verse) toggleVerse(activeLesson, current.verse, sentenceButton);
   else say(current.sentence, 0.85);
 });
 // Slow whole-sentence: read the verse word by word with a pause between words.
@@ -136,8 +187,7 @@ function closePanel() {
   if (selectedSpan) selectedSpan.classList.remove('selected');
   selectedSpan = null;
   current = null;
-  stopRecorded();
-  stop();
+  stopVerse();
 }
 
 function syncHighlightButtons() {
@@ -265,7 +315,8 @@ function renderLesson(lesson) {
       const row = el('div', 'verse');
       const play = el('button', 'verse-play', '🔊');
       play.title = 'Play verse';
-      play.addEventListener('click', () => playVerse(lesson, v));
+      initPlayButton(play, '⏹');
+      play.addEventListener('click', () => toggleVerse(lesson, v, play));
 
       const text = el('span', 'verse-text');
       v.tokens.forEach((tok, i) => {

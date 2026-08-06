@@ -27,12 +27,22 @@ function utter(text, rate) {
   return u;
 }
 
-// Speak the whole text as one utterance.
-export function speak(text, rate = 0.9) {
-  if (!('speechSynthesis' in window)) return;
+// Speak the whole text as one utterance. `onEnd` (optional) runs when this
+// utterance finishes on its own — not when a newer request supersedes it.
+export function speak(text, rate = 0.9, onEnd) {
+  if (!('speechSynthesis' in window)) {
+    if (onEnd) onEnd();
+    return;
+  }
   gen += 1; // cancel any running paced sequence
+  const mine = gen;
   speechSynthesis.cancel();
-  speechSynthesis.speak(utter(text, rate));
+  const u = utter(text, rate);
+  if (onEnd) {
+    u.onend = () => { if (mine === gen) onEnd(); };
+    u.onerror = u.onend; // a voice that fails must not leave the caller waiting
+  }
+  speechSynthesis.speak(u);
 }
 
 // Speak the parts one at a time with a silent gap between them.

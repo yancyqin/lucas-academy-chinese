@@ -305,6 +305,12 @@ body {
   flex: none;
 }
 
+/* while a verse is sounding, its button shows ⏹ on a soft pill */
+.verse-play.playing {
+  background: #eaf4ee;
+  border-radius: 999px;
+}
+
 .verse-num {
   flex: none;
   min-width: 1.6em;
@@ -425,7 +431,8 @@ body.show-pinyin .word-pinyin { display: block; }
   cursor: pointer;
 }
 
-.say:active { background: #2f6f4f; color: #fff; }
+.say:active,
+.say.playing { background: #2f6f4f; color: #fff; }
 
 .panel-buttons { display: flex; gap: 8px; }
 

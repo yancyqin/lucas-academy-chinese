@@ -1,7 +1,7 @@
 // Prerecorded narration (a real human-sounding voice, already read slowly).
 // Used for whole verses when a lesson has recordings; single words and lessons
 // without recordings keep using the browser's speech synthesis.
-import { stop as stopSpeech } from './speech.js?v=4';
+import { stop as stopSpeech } from './speech.js?v=5';
 
 // One shared element for the whole page, so starting a verse always replaces
 // whatever was playing — rapid taps can never stack two voices.
@@ -29,8 +29,10 @@ export function stopRecorded() {
 
 // Play a recording from its start. Call this directly inside a click handler:
 // iOS only allows playback that a user gesture started. `onFallback` runs if
-// the file cannot be loaded or played, so the lesson still speaks.
-export function playRecorded(src, onFallback) {
+// the file cannot be loaded or played, so the lesson still speaks; `onEnded`
+// runs when this recording finishes on its own, so a caller showing a stop
+// button can put it back.
+export function playRecorded(src, onFallback, onEnded) {
   stopSpeech(); // never let synthesis and a recording overlap
   gen += 1;
   const mine = gen;
@@ -50,6 +52,9 @@ export function playRecorded(src, onFallback) {
     onFallback();
   };
   player.onerror = fallback;
+  player.onended = () => {
+    if (mine === gen && onEnded) onEnded();
+  };
 
   // Re-assigning the same src does not rewind, so seek explicitly. Before any
   // data has loaded the seek is only remembered, which is exactly what we want.
