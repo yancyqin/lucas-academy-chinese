@@ -97,6 +97,11 @@ export default {
   title: '马可福音 4',
   subtitle: '和合本简体中文（CUV） · Mark 4',
 
+  // Recorded narration: one slow Mandarin file per verse. The player derives
+  // <dir>/verse-NN.mp3 from the verse number and falls back to the browser's
+  // speech synthesis if a file is missing.
+  audio: { dir: 'assets/audio/mark-4' },
+
   vocab: ['撒种', '比喻', '神国', '奥秘', '领受', '结实', '留心', '信心', '胆怯'],
 
   paragraphs: [

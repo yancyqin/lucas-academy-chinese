@@ -1,5 +1,6 @@
 import { speak, speakSequence, stop } from './speech.js?v=4';
-import lessons from '../lessons/index.js?v=6';
+import { playRecorded, stopRecorded, verseAudioSrc } from './audio.js?v=1';
+import lessons from '../lessons/index.js?v=7';
 
 const PUNCT_RE = /^[，。、：；？！…—─（）《》「」『』""'',.!?;:()\-\s]+$/;
 const PINYIN_STORAGE_KEY = 'lucas-academy-chinese.pinyin-visible';
@@ -86,15 +87,45 @@ function setWordbookMinimized(minimized) {
   }
 }
 
+// ---------- speaking ----------
+// Words are always synthesized; a recorded verse would drown them out, so any
+// synthesis stops the recording first.
+function say(text, rate) {
+  stopRecorded();
+  speak(text, rate);
+}
+
+function saySequence(parts, rate, gapMs) {
+  stopRecorded();
+  speakSequence(parts, rate, gapMs);
+}
+
+// Whole verse: play the recording when the lesson has one, otherwise speak it.
+// A failed download falls back to synthesis so the verse is never silent.
+function playVerse(lesson, verse) {
+  const sentence = verse.tokens.join('');
+  const src = verseAudioSrc(lesson, verse);
+  if (!src) {
+    say(sentence, 0.85);
+    return;
+  }
+  playRecorded(src, () => speak(sentence, 0.85));
+}
+
 // ---------- word panel ----------
 document.getElementById('panel-close').addEventListener('click', closePanel);
-document.getElementById('btn-say').addEventListener('click', () => current && speak(current.word, 0.9));
+document.getElementById('btn-say').addEventListener('click', () => current && say(current.word, 0.9));
 // "Slower" reads the word one character at a time with a pause — iOS clamps the
 // speech rate, so the pause is what makes it genuinely much slower.
-document.getElementById('btn-slow').addEventListener('click', () => current && speakSequence([...current.word], 0.5, 350));
-document.getElementById('btn-sentence').addEventListener('click', () => current && speak(current.sentence, 0.85));
+document.getElementById('btn-slow').addEventListener('click', () => current && saySequence([...current.word], 0.5, 350));
+document.getElementById('btn-sentence').addEventListener('click', () => {
+  if (!current) return;
+  // current.verse is null only for a Wordbook word that this lesson never uses.
+  if (current.verse) playVerse(activeLesson, current.verse);
+  else say(current.sentence, 0.85);
+});
 // Slow whole-sentence: read the verse word by word with a pause between words.
-document.getElementById('btn-sentence-slow').addEventListener('click', () => current && speakSequence(current.words, 0.55, 300));
+document.getElementById('btn-sentence-slow').addEventListener('click', () => current && saySequence(current.words, 0.55, 300));
 pinyinToggle.addEventListener('change', () => setPinyinVisible(pinyinToggle.checked));
 highlightButton.addEventListener('click', () => current && setWordHighlight(current.word, true));
 unhighlightButton.addEventListener('click', () => current && setWordHighlight(current.word, false));
@@ -105,6 +136,7 @@ function closePanel() {
   if (selectedSpan) selectedSpan.classList.remove('selected');
   selectedSpan = null;
   current = null;
+  stopRecorded();
   stop();
 }
 
@@ -130,13 +162,14 @@ function setWordHighlight(word, shouldHighlight) {
 }
 
 // Tapping a word in the text: pass the button span so it gets the selected style.
-function showWord(span, word, verseTokens, tokenIndex) {
-  openWordPanel(word, verseTokens, tokenIndex, span);
+function showWord(span, word, verse, tokenIndex) {
+  openWordPanel(word, verse, tokenIndex, span);
 }
 
-// Core panel opener, shared by text taps and Wordbook clicks. When verseTokens
-// is null (no sentence context) the panel just shows the word + its meaning.
-function openWordPanel(word, verseTokens, tokenIndex, span) {
+// Core panel opener, shared by text taps and Wordbook clicks. When verse is
+// null (no sentence context) the panel just shows the word + its meaning.
+function openWordPanel(word, verse, tokenIndex, span) {
+  const verseTokens = verse ? verse.tokens : null;
   if (selectedSpan) selectedSpan.classList.remove('selected');
   selectedSpan = span || null;
   if (span) span.classList.add('selected');
@@ -161,16 +194,17 @@ function openWordPanel(word, verseTokens, tokenIndex, span) {
     });
     current = {
       word,
+      verse,
       sentence: verseTokens.join(''),
       words: verseTokens.filter(t => !PUNCT_RE.test(t)),
     };
   } else {
-    current = { word, sentence: word, words: [word] };
+    current = { word, verse: null, sentence: word, words: [word] };
   }
 
   syncHighlightButtons();
   panelEl.classList.add('open');
-  speak(word, 0.9);
+  say(word, 0.9);
 }
 
 // First verse occurrence of a word — gives a Wordbook entry its example sentence.
@@ -178,7 +212,7 @@ function findFirstOccurrence(word) {
   for (const para of activeLesson.paragraphs) {
     for (const v of para.verses) {
       const idx = v.tokens.indexOf(word);
-      if (idx !== -1) return { tokens: v.tokens, index: idx };
+      if (idx !== -1) return { verse: v, index: idx };
     }
   }
   return null;
@@ -231,7 +265,7 @@ function renderLesson(lesson) {
       const row = el('div', 'verse');
       const play = el('button', 'verse-play', '🔊');
       play.title = 'Play verse';
-      play.addEventListener('click', () => speak(v.tokens.join(''), 0.85));
+      play.addEventListener('click', () => playVerse(lesson, v));
 
       const text = el('span', 'verse-text');
       v.tokens.forEach((tok, i) => {
@@ -247,7 +281,7 @@ function renderLesson(lesson) {
             el('span', 'word-pinyin', entry ? entry.pinyin : ''),
             el('span', 'word-text', tok),
           );
-          w.addEventListener('click', () => showWord(w, tok, v.tokens, i));
+          w.addEventListener('click', () => showWord(w, tok, v, i));
           text.append(w);
         }
       });
@@ -301,7 +335,7 @@ function renderWordbook() {
     if (highlightedWords.has(word)) item.append(el('span', 'wordbook-star', '⭐'));
     item.addEventListener('click', () => {
       const occ = findFirstOccurrence(word);
-      openWordPanel(word, occ ? occ.tokens : null, occ ? occ.index : -1, null);
+      openWordPanel(word, occ ? occ.verse : null, occ ? occ.index : -1, null);
     });
     wordbookListEl.append(item);
   });

@@ -16,6 +16,10 @@ Static site, no build step, no dependencies.
 
 ## Reading controls
 
+- Tap the 🔊 next to a verse to hear the whole verse. Mark 4 plays a recorded
+  Mandarin narration read slowly for children; lessons without recordings use
+  the browser's built-in voice, and so does every single-word playback.
+
 - Turn on **拼音** in the page header to show pinyin above every word. The preference is remembered on the device.
 - Tap a word, then choose **Mark** or **Unmark** in its word panel. Marked vocabulary stays highlighted across lessons and is saved in the browser’s local storage.
 
@@ -36,6 +40,10 @@ Production: <https://chinese.lucasacademy.org>
      its own token (rendered non-clickable).
    - `dict` — one entry per distinct word: `{ pinyin, meaning, usage }`.
 2. Import it in `lessons/index.js` and add it to the exported array.
+   To give the lesson recorded narration, add
+   `audio: { dir: 'assets/audio/<id>' }` and drop `verse-NN.mp3` files there
+   (generated in the private `lucas-academy-media` repo). A single verse can
+   also point at its own file with `audio: '...'`.
 3. Bump the `?v=` cache token in `index.html` / `js/app.js` / `lessons/index.js`
    if deploying anywhere cached (iPads cache ES modules aggressively).
 
