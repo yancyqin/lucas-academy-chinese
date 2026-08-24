@@ -4,8 +4,8 @@ A tap-to-learn Chinese reading app. Each lesson is a tab; every word in the text
 can be tapped to hear its pronunciation (browser speech synthesis, works offline
 on iPad) and see an English explanation — the word's meaning plus how it is used
 in that sentence. Whole sentences can be read alongside the **NIV** English text
-with a plain-language explanation, and a reader can record themselves to write
-the verse back from their own voice (默写).
+with a plain-language explanation, and in 默写 mode the text hides so a reader can
+write the verse back from the audio — the app reading it aloud, or their own voice.
 
 ## Run
 
@@ -32,9 +32,12 @@ npx wrangler dev --port 8098
   whole sentence plus a plain-English explanation of it. Tapping a word shows the
   same pair for that sentence in the word panel, whether or not the toggle is on.
   Also remembered on the device.
-- Turn on **默写 · Dictation** to hide the Chinese text behind a ✍️ blank. Play
-  the verse (the narration or your own recording), write it from memory, then tap
-  the blank to check. This mode always starts off, because the recordings it goes
+- Turn on **默写 · Dictation** to hide the Chinese text behind a ✍️ blank, and
+  read it to yourself: the 🔊 beside the verse plays it at speed, **🐢 Slower**
+  reads it word by word with a pause between words — slow enough to write from —
+  and 🎧 Mine still plays your own recording. Tap 🐢 again for another pass (while
+  it is reading, the same button stops it), write the verse down, then tap the
+  blank to check. This mode always starts off, because the recordings it goes
   with last only for the session.
 - Tap a word, then choose **Mark** or **Unmark** in its word panel. Marked vocabulary stays highlighted across lessons and is saved in the browser’s local storage.
 

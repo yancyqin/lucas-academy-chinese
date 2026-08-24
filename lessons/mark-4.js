@@ -1,6 +1,6 @@
 // 马可福音 4 · 和合本简体中文（CUV）
 // Scripture text is grouped into natural reading scenes; punctuation stays non-clickable.
-import mark32035 from './mark-3-20-35.js';
+import mark32035 from './mark-3-20-35.js?v=7';
 
 const mark4Entries = [
   ['教训', 'jiàoxun', 'to teach; teaching'], ['到', 'dào', 'to arrive at; to'],

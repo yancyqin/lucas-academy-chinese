@@ -1,5 +1,5 @@
-import { speak, speakSequence, stop } from './speech.js?v=5';
-import { playRecorded, stopRecorded, verseAudioSrc } from './audio.js?v=2';
+import { speak, speakSequence, stop } from './speech.js?v=6';
+import { playRecorded, stopRecorded, verseAudioSrc } from './audio.js?v=3';
 import { loadEnglish, englishVerse, englishAttribution, englishOffline, lessonHasEnglish } from './niv.js?v=1';
 import {
   isSupported as micSupported,
@@ -9,7 +9,7 @@ import {
   stopRecording,
   recordingNow,
 } from './record.js?v=1';
-import lessons from '../lessons/index.js?v=8';
+import lessons from '../lessons/index.js?v=9';
 
 const PUNCT_RE = /^[，。、：；？！…—─（）《》「」『』""'',.!?;:()\-\s]+$/;
 const PINYIN_STORAGE_KEY = 'lucas-academy-chinese.pinyin-visible';
@@ -187,15 +187,19 @@ function renderCredit() {
 }
 
 // ---------- 默写 (dictation) ----------
-// Hides the Chinese text so the reader can write it down from audio — their own
-// recording or the lesson narration — and reveal it to check. Session only,
-// like the recordings: a mode with nothing recorded yet would only confuse.
+// Hides the Chinese text so the reader can write it down from audio — the verse
+// read aloud (🔊 at speed, 🐢 word by word), or their own recording — and reveal
+// it to check. Session only, like the recordings: a mode with nothing recorded
+// yet would only confuse.
 function setDictation(on) {
   document.body.classList.toggle('dictation', on);
   dictationToggle.checked = on;
   if (on) {
     closePanel(); // the panel spells out the whole sentence — that is the answer
   } else {
+    // A 🐢 read still running would keep talking with its ⏹ now hidden. Only
+    // that button belongs to this mode — a verse playing from 🔊 is left alone.
+    if (playingButton && playingButton.classList.contains('verse-slow')) stopVerse();
     document.querySelectorAll('.verse.revealed').forEach(row => row.classList.remove('revealed'));
   }
 }
@@ -354,6 +358,22 @@ function speakVerse(sentence, button) {
 function toggleVerse(lesson, verse, button) {
   if (playingButton === button) stopVerse();
   else playVerse(lesson, verse, button);
+}
+
+// 默写: the verse read word by word with a pause between words, so it can be
+// written down while the text is hidden — the same 🐢 pacing as the panel's slow
+// sentence (iOS clamps the rate, so the gap is what makes it slow enough to
+// write from). Always synthesized: a narration file cannot be split into words.
+function toggleSlowVerse(verse, button) {
+  if (playingButton === button) {
+    stopVerse();
+    return;
+  }
+  stopVerse();
+  markPlaying(button);
+  speakSequence(verse.tokens.filter(t => !PUNCT_RE.test(t)), 0.55, 500, () =>
+    clearPlaying(button),
+  );
 }
 
 // ---------- word panel ----------
@@ -589,6 +609,14 @@ function renderLesson(lesson) {
       // and its explanation — one column beside the play button and verse number.
       const body = el('div', 'verse-body');
       body.append(text);
+
+      // 默写 reading: 🔊 in the gutter reads the verse at speed, this one word
+      // by word — either way the text stays hidden until the reader checks it.
+      const slow = el('button', 'verse-slow', '🐢 Slower');
+      slow.title = 'Read this verse slowly, word by word';
+      initToggleButton(slow, '⏹ Stop');
+      slow.addEventListener('click', () => toggleSlowVerse(v, slow));
+      body.append(slow);
 
       // Stands in for the hidden text in 默写 mode and reveals it to check.
       const blank = el('button', 'verse-blank', '✍️ Show');

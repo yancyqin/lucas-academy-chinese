@@ -593,6 +593,33 @@ body.show-english .verse-explain {
 }
 
 /* ---------- 默写 (dictation) ---------- */
+/* Reading the verse aloud while its text is hidden: the gutter 🔊 reads it at
+   speed, this one word by word — slow enough to write from. Only this mode
+   shows it; elsewhere the same slow sentence sits in the word panel. */
+.verse-slow {
+  display: none;
+  align-items: center;
+  margin: 0 8px 0 0;
+  border: 1.5px solid #e0d3b8;
+  background: #fff;
+  color: #6b5433;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+body.dictation .verse-slow { display: inline-flex; }
+.verse-slow:hover { background: #f8f1e0; }
+
+/* while the verse is being read out, the button shows ⏹ */
+.verse-slow.playing {
+  background: #eaf4ee;
+  border-color: #a9cdb8;
+}
+
 /* The blank replaces the Chinese text so it can be written from memory, and
    brings it back to check. Only this mode ever hides the text. */
 .verse-blank {

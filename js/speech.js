@@ -48,21 +48,31 @@ export function speak(text, rate = 0.9, onEnd) {
 // Speak the parts one at a time with a silent gap between them.
 // iOS clamps very low `rate`, so the GAP is what actually makes this much
 // slower — and breaking at character/word boundaries makes each tone clear.
-export function speakSequence(parts, rate = 0.5, gapMs = 350) {
-  if (!('speechSynthesis' in window)) return;
+// `onDone` (optional) runs when the whole sequence finishes on its own — not
+// when a newer request supersedes it.
+export function speakSequence(parts, rate = 0.5, gapMs = 350, onDone) {
+  if (!('speechSynthesis' in window)) {
+    if (onDone) onDone();
+    return;
+  }
   gen += 1;
   const mine = gen;
   speechSynthesis.cancel();
   const items = parts.filter(p => p && p.trim());
   let i = 0;
   const next = () => {
-    if (mine !== gen || i >= items.length) return; // superseded or finished
+    if (mine !== gen) return; // superseded
+    if (i >= items.length) {
+      if (onDone) onDone();
+      return;
+    }
     const u = utter(items[i], rate);
     u.onend = () => {
       if (mine !== gen) return;
       i += 1;
       setTimeout(next, gapMs);
     };
+    u.onerror = u.onend; // one word that fails must not stall the rest
     speechSynthesis.speak(u);
   };
   next();

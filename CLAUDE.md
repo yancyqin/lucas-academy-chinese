@@ -12,8 +12,10 @@ when working on the English parallel (that half needs the Worker).
 - `js/app.js` — renders tabs from the lesson registry, renders paragraphs
   (art placeholder + verses of clickable word buttons), drives the word panel,
   the English layer, dictation mode, and the per-verse record controls.
-- `js/speech.js` — `speak(text, rate)` wrapper over `speechSynthesis` (zh-CN
-  voice, picked lazily because iOS loads voices async).
+- `js/speech.js` — `speak(text, rate, onEnd)` and `speakSequence(parts, rate,
+  gapMs, onDone)` over `speechSynthesis` (zh-CN voice, picked lazily because iOS
+  loads voices async). A generation counter drops the callbacks of a read that a
+  newer one supersedes, so a button only ever resets itself.
 - `js/audio.js` — prerecorded verse narration: one shared `Audio` element, so a
   new verse always replaces the playing one. `verseAudioSrc()` resolves
   `verse.audio` first, else `<lesson.audio.dir>/verse-NN.mp3` (default dir
@@ -41,7 +43,12 @@ when working on the English parallel (that half needs the Worker).
 
 - Every internal ES-module import carries a `?v=N` cache token (same convention
   as lucasgame-academy) — bump it on any JS/content change if this ever deploys
-  to iPads; serve.py also sends `Cache-Control: no-store`.
+  to iPads; serve.py also sends `Cache-Control: no-store`. **Every importer of a
+  module must name the same token**: the browser keys modules by URL, so two
+  spellings load two copies with two sets of module state (two `gen` counters in
+  speech.js would stop cancelling each other). A lesson imported by another lesson
+  — `mark-3-20-35.js` pulls in `mark-3.js`, `mark-4.js` pulls in `mark-3-20-35.js`
+  — has to be bumped in the registry and in that lesson together.
 - `app.js` console.warns `dict missing: …` when a token has no dict entry —
   check the browser console after adding/editing a lesson.
 - Speech requires a user gesture on iOS; all speak() and playRecorded() calls
@@ -71,6 +78,12 @@ when working on the English parallel (that half needs the Worker).
   so `setDictation(false)` runs at startup even though the browser restores the
   checkbox. Do not "improve" this by persisting clips — a child's voice should
   not outlive the lesson.
+- 默写 mode has to be able to sound the verse without showing it: the gutter 🔊
+  keeps working, and `.verse-slow` (🐢, rendered on every verse but only shown by
+  `body.dictation`) reads it word by word — punctuation dropped, gap-paced, always
+  synthesized, since a narration file cannot be split into words. Leaving the mode
+  stops that read, because its ⏹ goes away with it; a verse playing from 🔊 is left
+  alone. The word panel stays closed in 默写 — it spells out the answer.
 - Kid UX: big touch targets, no non-interactive chrome; tabs are pill buttons
   (a dashed "下一课 · soon" pill marks upcoming lessons). The record buttons are
   not rendered at all where the microphone is unavailable.

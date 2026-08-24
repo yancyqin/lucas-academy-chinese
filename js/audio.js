@@ -1,7 +1,7 @@
 // Prerecorded narration (a real human-sounding voice, already read slowly).
 // Used for whole verses when a lesson has recordings; single words and lessons
 // without recordings keep using the browser's speech synthesis.
-import { stop as stopSpeech } from './speech.js?v=5';
+import { stop as stopSpeech } from './speech.js?v=6';
 
 // One shared element for the whole page, so starting a verse always replaces
 // whatever was playing — rapid taps can never stack two voices.
