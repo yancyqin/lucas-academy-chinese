@@ -9,3 +9,7 @@ CLAUDE.md
 README.md
 serve.py
 wrangler.jsonc
+worker
+worker/**
+.dev.vars
+.dev.vars.example

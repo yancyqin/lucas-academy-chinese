@@ -1,0 +1,3 @@
+# YouVersion Platform app key (server-only, never exposed to the browser).
+# Production: npx wrangler secret put YVP_APP_KEY
+YVP_APP_KEY=

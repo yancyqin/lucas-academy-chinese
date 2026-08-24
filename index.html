@@ -4,16 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>中文阅读 · Lucas Academy</title>
-<link rel="stylesheet" href="css/style.css?v=7">
+<link rel="stylesheet" href="css/style.css?v=8">
 </head>
 <body>
 
 <header class="top">
   <div class="brand">📖 中文阅读<span class="brand-sub">Lucas Academy Chinese</span></div>
-  <label class="pinyin-toggle" for="pinyin-toggle">
-    <input id="pinyin-toggle" type="checkbox">
-    <span>拼音</span>
-  </label>
+  <div class="toggles">
+    <label class="toggle" for="pinyin-toggle">
+      <input id="pinyin-toggle" type="checkbox">
+      <span>拼音</span>
+    </label>
+    <label class="toggle" for="english-toggle">
+      <input id="english-toggle" type="checkbox">
+      <span>English · NIV</span>
+    </label>
+    <label class="toggle" for="dictation-toggle">
+      <input id="dictation-toggle" type="checkbox">
+      <span>默写 · Dictation</span>
+    </label>
+  </div>
   <nav id="tabs" class="tabs"></nav>
 </header>
 
@@ -29,6 +39,8 @@
     <div id="wordbook-list" class="wordbook-list"></div>
   </aside>
 </div>
+
+<footer id="bible-credit" class="bible-credit" hidden></footer>
 
 <aside id="panel" class="panel" aria-live="polite">
   <button id="panel-close" class="panel-close" title="Close">✕</button>
@@ -53,8 +65,12 @@
     </span>
     <span id="panel-sentence" class="panel-sentence"></span>
   </div>
+  <div id="panel-english" class="panel-english" hidden>
+    <p id="panel-niv-row" class="panel-niv"><span class="en-tag">NIV</span><span id="panel-niv"></span></p>
+    <p id="panel-explain" class="panel-explain"></p>
+  </div>
 </aside>
 
-<script type="module" src="js/app.js?v=10"></script>
+<script type="module" src="js/app.js?v=11"></script>
 </body>
 </html>

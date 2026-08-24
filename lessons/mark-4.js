@@ -96,6 +96,8 @@ export default {
   tabTitle: 'Mark 4',
   title: '马可福音 4',
   subtitle: '和合本简体中文（CUV） · Mark 4',
+  // YouVersion passage id for the English parallel: <book>.<chapter>.<verse>.
+  passage: { book: 'MRK', chapter: 4 },
 
   // Recorded narration: one slow Mandarin file per verse. The player derives
   // <dir>/verse-NN.mp3 from the verse number and falls back to the browser's
@@ -202,6 +204,52 @@ export default {
     },
   ],
 
+
+  // Plain-English explanation of each whole verse, shown under the NIV line.
+  // Written for this app (the API supplies scripture text only), keyed by verse.
+  explain: {
+    1: "Jesus teaches by the lake again. The crowd is so big that he sits in a boat on the water while the people stand on the shore.",
+    2: "He teaches with 比喻 — parables: everyday stories that carry a much bigger meaning.",
+    3: "The story starts. A farmer goes out to scatter seed; 撒种 means to sow.",
+    4: "Some seed lands on the hard path, and birds come and eat it all.",
+    5: "Some lands on thin soil over rock, where it sprouts faster than anywhere else.",
+    6: "But with no root, one hot day of sun dries it up.",
+    7: "Some falls among thorns, which grow up and crowd it out, so it makes no grain. 结实 = to bear fruit.",
+    8: "Some falls on good soil and grows into a harvest — thirty, sixty, even a hundred times what was sown.",
+    9: "「有耳可听的，就应当听！」 The story is a test of listening, not a lesson in farming.",
+    10: "Later, when the crowd has gone, his followers and the twelve ask him what the parable means.",
+    11: "Jesus says the secret of God's kingdom is given to them; for outsiders it stays wrapped up in stories.",
+    12: "A hard heart can look without seeing and hear without understanding. The parable still leaves a door open for anyone who truly wants to turn back.",
+    13: "He asks his own disciples first: if you miss this parable, how will you understand any of the others?",
+    14: "Here is the key to the whole story: the seed is 道 — the word, God's message.",
+    15: "Path soil is a person who hears the word, and Satan takes it away at once.",
+    16: "Rocky soil is a person who is delighted the moment they hear it.",
+    17: "But there is no root, so when trouble or persecution comes because of the word, they fall away just as quickly.",
+    18: "Thorny soil is another person who hears the word.",
+    19: "Then worries, the pull of money, and other wants crowd in and choke it, so nothing grows. 挤住 = squeezed out.",
+    20: "Good soil is a person who hears, takes it in, and bears a harvest: thirty, sixty, a hundred times over.",
+    21: "Nobody lights a lamp to hide it under a basket or a bed. You put it up where it lights the whole room.",
+    22: "Hidden things are meant to come out. Jesus's teaching is not a secret to keep; it is a lamp.",
+    23: "Again the same line: whoever has ears, listen.",
+    24: "Pay attention to what you hear. The measuring cup you use for other people is the one used for you — and more will be added.",
+    25: "Whoever has, gets more; whoever has nothing loses even that. What you do with what you hear decides which one you are.",
+    26: "Another picture of God's kingdom: a man scatters seed on the ground.",
+    27: "He sleeps at night and gets up by day, and the seed sprouts and grows without him knowing how.",
+    28: "The ground grows the grain by itself: first the shoot, then the ear, then full kernels on the ear.",
+    29: "When the grain is ripe he takes the sickle, because harvest time has come.",
+    30: "Jesus asks what we could compare God's kingdom to, what picture would show it.",
+    31: "A mustard seed — one of the tiniest seeds anyone plants in a field.",
+    32: "Yet it grows taller than every garden plant, with branches big enough for birds to nest in its shade. Tiny start, huge ending.",
+    33: "He taught with many stories like these, matching what his listeners were able to take in.",
+    34: "In public he always used parables; alone with the disciples he explained everything.",
+    35: "That evening Jesus says to the disciples: let us cross over to the other side.",
+    36: "They leave the crowd behind and take him across, still in the boat. Other boats go along too.",
+    37: "A sudden squall hits. Waves break into the boat until it is nearly full of water.",
+    38: "Jesus is asleep on a cushion in the stern. They wake him: 夫子! We are dying — don't you care?",
+    39: "He wakes, scolds the wind, and says to the sea 「住了吧！静了吧！」 The wind drops and the water goes completely calm.",
+    40: "His question back to them: why so frightened? Do you still have no faith?",
+    41: "Now they are afraid of something else altogether: who is this, that even the wind and the sea obey him?",
+  },
   dict: {
     ...mark32035.dict,
     ...Object.fromEntries(mark4Entries),

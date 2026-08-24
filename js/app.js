@@ -1,14 +1,25 @@
 import { speak, speakSequence, stop } from './speech.js?v=5';
 import { playRecorded, stopRecorded, verseAudioSrc } from './audio.js?v=2';
-import lessons from '../lessons/index.js?v=7';
+import { loadEnglish, englishVerse, englishAttribution, englishOffline, lessonHasEnglish } from './niv.js?v=1';
+import {
+  isSupported as micSupported,
+  hasClip,
+  clipUrl,
+  startRecording,
+  stopRecording,
+  recordingNow,
+} from './record.js?v=1';
+import lessons from '../lessons/index.js?v=8';
 
 const PUNCT_RE = /^[，。、：；？！…—─（）《》「」『』""'',.!?;:()\-\s]+$/;
 const PINYIN_STORAGE_KEY = 'lucas-academy-chinese.pinyin-visible';
+const ENGLISH_STORAGE_KEY = 'lucas-academy-chinese.english-visible';
 const HIGHLIGHTS_STORAGE_KEY = 'lucas-academy-chinese.highlighted-words';
 const WORDBOOK_MINIMIZED_STORAGE_KEY = 'lucas-academy-chinese.wordbook-minimized';
 
 const tabsEl = document.getElementById('tabs');
 const contentEl = document.getElementById('content');
+const creditEl = document.getElementById('bible-credit');
 
 const panelEl = document.getElementById('panel');
 const panelWord = document.getElementById('panel-word');
@@ -16,7 +27,13 @@ const panelPinyin = document.getElementById('panel-pinyin');
 const panelMeaning = document.getElementById('panel-meaning');
 const panelUsage = document.getElementById('panel-usage');
 const panelSentence = document.getElementById('panel-sentence');
+const panelEnglish = document.getElementById('panel-english');
+const panelNiv = document.getElementById('panel-niv');
+const panelNivRow = document.getElementById('panel-niv-row');
+const panelExplain = document.getElementById('panel-explain');
 const pinyinToggle = document.getElementById('pinyin-toggle');
+const englishToggle = document.getElementById('english-toggle');
+const dictationToggle = document.getElementById('dictation-toggle');
 const highlightButton = document.getElementById('btn-highlight');
 const unhighlightButton = document.getElementById('btn-unhighlight');
 const wordbookEl = document.getElementById('wordbook');
@@ -29,6 +46,11 @@ let selectedSpan = null;
 let current = null; // { word, sentence }
 let highlightedWords = readHighlights();
 let wordbookMinimized = readWordbookMinimized();
+
+// The English-parallel and record controls of the lesson on screen, by verse
+// number, so an English line arriving from the network (or a finished recording)
+// can be dropped straight into the right row.
+let verseRows = new Map(); // n -> { verse, en, explain, mine, record }
 
 function readHighlights() {
   try {
@@ -65,6 +87,179 @@ function restorePinyinPreference() {
   }
 }
 
+// ---------- English parallel (NIV) ----------
+let englishVisible = false;
+// Set once any NIV text has actually been shown: YouVersion's copyright notice
+// has to appear wherever its text does, including from the word panel alone.
+let englishShown = false;
+
+function setEnglishVisible(visible) {
+  englishVisible = visible;
+  document.body.classList.toggle('show-english', visible);
+  englishToggle.checked = visible;
+  try {
+    localStorage.setItem(ENGLISH_STORAGE_KEY, String(visible));
+  } catch {
+    // The page still shows English even if the choice cannot be persisted.
+  }
+  if (visible) loadLessonEnglish();
+  else renderCredit();
+}
+
+function restoreEnglishPreference() {
+  try {
+    setEnglishVisible(localStorage.getItem(ENGLISH_STORAGE_KEY) === 'true');
+  } catch {
+    setEnglishVisible(false);
+  }
+}
+
+// Fetch the English text for the lesson on screen one paragraph at a time and
+// fill each line in as it arrives, so the reader sees the first scene while the
+// rest is still loading.
+async function loadLessonEnglish() {
+  const lesson = activeLesson;
+  if (!lesson || !englishVisible || !lessonHasEnglish(lesson)) {
+    renderCredit();
+    return;
+  }
+  renderCredit();
+  for (const para of lesson.paragraphs) {
+    const numbers = para.verses.map(v => v.n);
+    await loadEnglish(lesson, numbers);
+    if (lesson !== activeLesson) return; // the reader changed lessons mid-flight
+    numbers.forEach(n => fillEnglish(lesson, n));
+    renderCredit();
+    if (englishOffline()) return; // no English server in this session — stop asking
+  }
+}
+
+function fillEnglish(lesson, n) {
+  const row = verseRows.get(n);
+  if (!row) return;
+  const text = englishVerse(lesson, n);
+  row.en.textContent = '';
+  if (text) {
+    row.en.classList.remove('pending');
+    row.en.append(el('span', 'en-tag', 'NIV'), text);
+    englishShown = true;
+  } else {
+    row.en.classList.add('pending');
+    row.en.textContent = englishOffline() ? '' : '…';
+  }
+}
+
+function renderCredit() {
+  const attribution = englishAttribution();
+  creditEl.textContent = '';
+
+  if (englishShown && attribution) {
+    creditEl.append(
+      el('p', 'bible-credit-title', `${attribution.title} (${attribution.abbreviation})`),
+    );
+    if (attribution.copyright) creditEl.append(el('p', 'bible-credit-line', attribution.copyright));
+    const link = document.createElement('a');
+    link.className = 'bible-credit-link';
+    link.href = attribution.youVersionDeepLink;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.textContent = 'YouVersion';
+    creditEl.append(link);
+    creditEl.hidden = false;
+    return;
+  }
+
+  if (englishVisible && activeLesson && lessonHasEnglish(activeLesson)) {
+    creditEl.append(
+      el(
+        'p',
+        'bible-credit-note',
+        englishOffline()
+          ? 'The English parallel needs the lesson server — the Chinese lesson works without it.'
+          : 'Loading the English parallel…',
+      ),
+    );
+    creditEl.hidden = false;
+    return;
+  }
+
+  creditEl.hidden = true;
+}
+
+// ---------- 默写 (dictation) ----------
+// Hides the Chinese text so the reader can write it down from audio — their own
+// recording or the lesson narration — and reveal it to check. Session only,
+// like the recordings: a mode with nothing recorded yet would only confuse.
+function setDictation(on) {
+  document.body.classList.toggle('dictation', on);
+  dictationToggle.checked = on;
+  if (on) {
+    closePanel(); // the panel spells out the whole sentence — that is the answer
+  } else {
+    document.querySelectorAll('.verse.revealed').forEach(row => row.classList.remove('revealed'));
+  }
+}
+
+// ---------- your own voice ----------
+// Session-only recordings, one verse at a time; the recording button shows ⏹.
+let recordingButton = null;
+
+function clipKey(lesson, verse) {
+  return `${lesson.id}:${verse.n}`;
+}
+
+function markRecording(button) {
+  clearRecording();
+  recordingButton = button;
+  button.textContent = button.dataset.stopLabel;
+  button.title = 'Stop recording';
+  button.classList.add('recording');
+}
+
+function clearRecording(button) {
+  if (!recordingButton || (button && button !== recordingButton)) return;
+  recordingButton.textContent = recordingButton.dataset.idleLabel;
+  recordingButton.title = recordingButton.dataset.idleTitle;
+  recordingButton.classList.remove('recording');
+  recordingButton = null;
+}
+
+// Same button starts and stops. Called straight from the click so iOS still
+// counts it as a gesture when the microphone prompt appears.
+function toggleRecording(lesson, verse, row) {
+  const key = clipKey(lesson, verse);
+  if (recordingNow() === key) {
+    stopRecording();
+    return;
+  }
+  stopVerse(); // never record the app's own voice back through the speaker
+  row.note.hidden = true;
+  markRecording(row.record);
+  startRecording(key, {
+    onDone: () => {
+      clearRecording(row.record);
+      row.mine.hidden = !hasClip(key);
+    },
+    onError: () => {
+      clearRecording(row.record);
+      row.note.textContent = 'No microphone here — needs https and permission.';
+      row.note.hidden = false;
+    },
+  });
+}
+
+function toggleMine(lesson, verse, row) {
+  const url = clipUrl(clipKey(lesson, verse));
+  if (!url) return;
+  if (playingButton === row.mine) {
+    stopVerse();
+    return;
+  }
+  stopVerse();
+  markPlaying(row.mine);
+  playRecorded(url, () => clearPlaying(row.mine), () => clearPlaying(row.mine));
+}
+
 function readWordbookMinimized() {
   try {
     return localStorage.getItem(WORDBOOK_MINIMIZED_STORAGE_KEY) === 'true';
@@ -93,7 +288,7 @@ function setWordbookMinimized(minimized) {
 // that is the reader's only feedback that the tap registered.
 let playingButton = null;
 
-function initPlayButton(button, stopLabel) {
+function initToggleButton(button, stopLabel) {
   button.dataset.idleLabel = button.textContent;
   button.dataset.idleTitle = button.title;
   button.dataset.stopLabel = stopLabel;
@@ -168,7 +363,7 @@ document.getElementById('btn-say').addEventListener('click', () => current && sa
 // speech rate, so the pause is what makes it genuinely much slower.
 document.getElementById('btn-slow').addEventListener('click', () => current && saySequence([...current.word], 0.5, 350));
 const sentenceButton = document.getElementById('btn-sentence');
-initPlayButton(sentenceButton, '⏹ Stop');
+initToggleButton(sentenceButton, '⏹ Stop');
 sentenceButton.addEventListener('click', () => {
   if (!current) return;
   // current.verse is null only for a Wordbook word that this lesson never uses.
@@ -178,6 +373,8 @@ sentenceButton.addEventListener('click', () => {
 // Slow whole-sentence: read the verse word by word with a pause between words.
 document.getElementById('btn-sentence-slow').addEventListener('click', () => current && saySequence(current.words, 0.55, 300));
 pinyinToggle.addEventListener('change', () => setPinyinVisible(pinyinToggle.checked));
+englishToggle.addEventListener('change', () => setEnglishVisible(englishToggle.checked));
+dictationToggle.addEventListener('change', () => setDictation(dictationToggle.checked));
 highlightButton.addEventListener('click', () => current && setWordHighlight(current.word, true));
 unhighlightButton.addEventListener('click', () => current && setWordHighlight(current.word, false));
 wordbookMinimizeButton.addEventListener('click', () => setWordbookMinimized(!wordbookMinimized));
@@ -252,9 +449,52 @@ function openWordPanel(word, verse, tokenIndex, span) {
     current = { word, verse: null, sentence: word, words: [word] };
   }
 
+  renderPanelEnglish(verse);
   syncHighlightButtons();
   panelEl.classList.add('open');
   say(word, 0.9);
+}
+
+// The whole sentence in English plus its explanation. Tapping a word is a
+// direct question about meaning, so this fetches the verse even when the inline
+// English parallel is switched off.
+function renderPanelEnglish(verse) {
+  const explanation = (verse && activeLesson.explain && activeLesson.explain[verse.n]) || '';
+  panelExplain.textContent = explanation;
+  panelExplain.hidden = !explanation;
+
+  if (!verse || !lessonHasEnglish(activeLesson)) {
+    panelNiv.textContent = '';
+    panelNivRow.hidden = true;
+    panelEnglish.hidden = !explanation;
+    return;
+  }
+
+  const text = englishVerse(activeLesson, verse.n);
+  panelNiv.textContent = text || (englishOffline() ? '' : '…');
+  panelNivRow.hidden = !text && englishOffline();
+  panelEnglish.hidden = !text && !explanation && englishOffline();
+  if (text) {
+    englishShown = true;
+    renderCredit();
+    return;
+  }
+  if (englishOffline()) return;
+
+  const lesson = activeLesson;
+  loadEnglish(lesson, [verse.n]).then(() => {
+    // A different lesson may be on screen by now, and its verse 5 is not this
+    // verse 5 — leave its rows alone.
+    if (lesson !== activeLesson) return;
+    fillEnglish(lesson, verse.n);
+    renderCredit();
+    // Only touch the panel if it is still showing this verse.
+    if (!current || current.verse !== verse) return;
+    const arrived = englishVerse(lesson, verse.n);
+    panelNiv.textContent = arrived || '';
+    panelNivRow.hidden = !arrived;
+    if (arrived) panelEnglish.hidden = false;
+  });
 }
 
 // First verse occurrence of a word — gives a Wordbook entry its example sentence.
@@ -276,9 +516,17 @@ function el(tag, className, text) {
   return node;
 }
 
+function withChildren(node, ...children) {
+  node.append(...children);
+  return node;
+}
+
 function renderLesson(lesson) {
   activeLesson = lesson;
   closePanel();
+  stopRecording();
+  clearRecording();
+  verseRows = new Map();
   contentEl.textContent = '';
 
   contentEl.append(
@@ -315,7 +563,7 @@ function renderLesson(lesson) {
       const row = el('div', 'verse');
       const play = el('button', 'verse-play', '🔊');
       play.title = 'Play verse';
-      initPlayButton(play, '⏹');
+      initToggleButton(play, '⏹');
       play.addEventListener('click', () => toggleVerse(lesson, v, play));
 
       const text = el('span', 'verse-text');
@@ -337,7 +585,45 @@ function renderLesson(lesson) {
         }
       });
 
-      row.append(play, el('span', 'verse-num', String(v.n)), text);
+      // Chinese text, then the reader's own controls, then the English parallel
+      // and its explanation — one column beside the play button and verse number.
+      const body = el('div', 'verse-body');
+      body.append(text);
+
+      // Stands in for the hidden text in 默写 mode and reveals it to check.
+      const blank = el('button', 'verse-blank', '✍️ Show');
+      blank.addEventListener('click', () => {
+        const revealed = row.classList.toggle('revealed');
+        blank.textContent = revealed ? '🙈 Hide' : '✍️ Show';
+      });
+      body.append(blank);
+
+      const en = el('p', 'verse-en');
+      const explanation = (lesson.explain && lesson.explain[v.n]) || '';
+      const explain = el('p', 'verse-explain', explanation);
+      explain.hidden = !explanation;
+      body.append(en, explain);
+
+      // The reader's own controls come last, under the whole verse, so the
+      // Chinese line and its English stay next to each other.
+      const record = el('button', 'verse-record', '🎤 Record');
+      record.title = 'Record myself reading this verse';
+      initToggleButton(record, '⏹ Stop');
+      const mine = el('button', 'verse-mine', '🎧 Mine');
+      mine.title = 'Play my recording';
+      initToggleButton(mine, '⏹ Stop');
+      mine.hidden = !hasClip(clipKey(lesson, v));
+      const note = el('span', 'verse-note');
+      note.hidden = true;
+      // No microphone (or an http origin) means no working button to show.
+      if (micSupported()) body.append(withChildren(el('div', 'verse-tools'), record, mine, note));
+
+      const nodes = { verse: v, row, en, explain, record, mine, note };
+      verseRows.set(v.n, nodes);
+      record.addEventListener('click', () => toggleRecording(lesson, v, nodes));
+      mine.addEventListener('click', () => toggleMine(lesson, v, nodes));
+
+      row.append(play, el('span', 'verse-num', String(v.n)), body);
       sec.append(row);
     });
 
@@ -346,6 +632,8 @@ function renderLesson(lesson) {
 
   warnMissingDictEntries(lesson);
   renderWordbook();
+  if (englishVisible) loadLessonEnglish();
+  else renderCredit();
 }
 
 // ---------- wordbook ----------
@@ -424,5 +712,9 @@ lessons.forEach(lesson => {
 tabsEl.append(el('span', 'tab soon', 'Next · soon'));
 
 restorePinyinPreference();
+restoreEnglishPreference();
+// A reload restores checkbox state on its own, but the recordings it was made
+// for are gone — so dictation always starts off.
+setDictation(false);
 setWordbookMinimized(wordbookMinimized);
 selectLesson(location.hash.slice(1));

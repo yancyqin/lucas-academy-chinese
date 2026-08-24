@@ -32,11 +32,17 @@ body {
   letter-spacing: 0.04em;
 }
 
-.pinyin-toggle {
+.toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin-top: 8px;
+}
+
+.toggle {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 8px;
   color: #6b5433;
   font-size: 0.9rem;
   font-weight: 600;
@@ -44,7 +50,7 @@ body {
   user-select: none;
 }
 
-.pinyin-toggle input {
+.toggle input {
   width: 1.05rem;
   height: 1.05rem;
   accent-color: #2f6f4f;
@@ -491,7 +497,178 @@ body.show-pinyin .word-pinyin { display: block; }
   padding: 0 0.08em;
 }
 
+/* ---------- English parallel + explanation ---------- */
+/* The Chinese text, the reader's own controls, and the English block share one
+   column so they all line up under each other, right of the verse number. */
+.verse-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Both lines belong to the English layer: one toggle shows or hides them. */
+.verse-en,
+.verse-explain {
+  display: none;
+}
+
+body.show-english .verse-en,
+body.show-english .verse-explain {
+  display: block;
+}
+
+.verse-en {
+  margin: 2px 0 0;
+  padding-left: 10px;
+  border-left: 3px solid #cfe0d4;
+  font-size: 1.02rem;
+  line-height: 1.6;
+  color: #46523f;
+}
+
+.verse-en.pending {
+  color: #c2b49a;
+  border-left-color: #ece3d0;
+}
+
+.en-tag {
+  margin-right: 8px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #eaf4ee;
+  color: #2f6f4f;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  vertical-align: 0.12em;
+}
+
+.verse-explain {
+  margin: 4px 0 0;
+  padding-left: 13px;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #8a7658;
+}
+
+/* ---------- your own voice ---------- */
+.verse-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.verse-record,
+.verse-mine {
+  border: 1.5px solid #e0d3b8;
+  background: #fff;
+  color: #6b5433;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.verse-record:hover,
+.verse-mine:hover { background: #f8f1e0; }
+
+/* while the microphone is live, the button shows ⏹ on a soft red pill */
+.verse-record.recording {
+  background: #fdecec;
+  border-color: #e8b4b4;
+  color: #a5352f;
+}
+
+.verse-mine.playing {
+  background: #eaf4ee;
+  border-color: #a9cdb8;
+}
+
+.verse-note {
+  font-size: 0.82rem;
+  color: #a5352f;
+}
+
+/* ---------- 默写 (dictation) ---------- */
+/* The blank replaces the Chinese text so it can be written from memory, and
+   brings it back to check. Only this mode ever hides the text. */
+.verse-blank {
+  display: none;
+  border: 1.5px dashed #d8c7a5;
+  background: #fffdf7;
+  color: #8a7658;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+body.dictation .verse-blank { display: inline-flex; }
+body.dictation .verse-text { display: none; }
+body.dictation .verse.revealed .verse-text { display: inline; }
+
+/* ---------- Bible version credit ---------- */
+/* YouVersion sends the copyright notice with the text and requires it to be
+   shown wherever the text appears, so this footer follows the English layer. */
+.bible-credit {
+  max-width: 720px;
+  margin: 8px auto 28px;
+  padding: 0 20px;
+  text-align: center;
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: #a08c67;
+}
+
+.bible-credit-title {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.bible-credit-line {
+  margin: 0;
+  white-space: pre-line;
+}
+
+.bible-credit-note {
+  margin: 0;
+  font-style: italic;
+}
+
+.bible-credit-link {
+  color: #2f6f4f;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* ---------- panel: whole sentence in English ---------- */
+.panel-english {
+  margin-top: 10px;
+  border-top: 1px solid #f0e8d5;
+  padding-top: 10px;
+}
+
+.panel-niv {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.6;
+  color: #46523f;
+}
+
+.panel-explain {
+  margin: 6px 0 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #8a7658;
+}
+
 @media (max-width: 480px) {
   .verse-text { font-size: 1.35rem; }
   .panel-word { font-size: 1.9rem; }
+  .verse-en { font-size: 0.98rem; }
 }

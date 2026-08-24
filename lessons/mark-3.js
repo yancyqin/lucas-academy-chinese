@@ -6,6 +6,8 @@ export default {
   tabTitle: 'Mark 3:1-19',
   title: '马可福音 3:1–19',
   subtitle: '和合本（神版） · Mark 3:1–19',
+  // YouVersion passage id for the English parallel: <book>.<chapter>.<verse>.
+  passage: { book: 'MRK', chapter: 3 },
 
   paragraphs: [
     {
@@ -64,6 +66,30 @@ export default {
     },
   ],
 
+
+  // Plain-English explanation of each whole verse, shown under the NIV line.
+  // Written for this app (the API supplies scripture text only), keyed by verse.
+  explain: {
+    1: "Jesus goes back into the synagogue. A man there has a hand that is shrivelled and stiff — 枯干 means dried up.",
+    2: "People are watching him, but not to learn. They want to catch him healing on the Sabbath so they can accuse him.",
+    3: "Jesus does not heal quietly in a corner. He asks the man to stand up where everyone can see.",
+    4: "His question turns the trap around: on a rest day, is it right to help or to harm, to save a life or to destroy one? Nobody dares answer.",
+    5: "Jesus is angry and sad at the same time — angry at hard hearts, grieved for the people. The man stretches out his hand and it is whole again.",
+    6: "The Pharisees and Herod's supporters usually disagree with each other, but now they plan together how to get rid of Jesus.",
+    7: "Jesus moves away to the lakeside, and a crowd from Galilee follows him.",
+    8: "People come from every direction because news of what he has done has travelled. 泰尔、西顿 (Tyre and Sidon) are cities far up the coast.",
+    9: "The crowd presses so close that he asks the disciples to keep a small boat ready by the shore.",
+    10: "Everyone who is sick pushes forward to touch him — they have seen him heal many others.",
+    11: "Even the evil spirits recognise him, fall down in front of him, and shout out who he is.",
+    12: "Jesus warns them again and again to keep quiet. He does not want a crowd that follows a rumour.",
+    13: "He goes up the mountain and calls the ones he chooses, and they come to him.",
+    14: "He appoints twelve — first to be with him, then to be sent out to preach. 设立 means to appoint.",
+    15: "He also gives them his own authority to drive out demons.",
+    16: "The list of the twelve starts with Simon, whom Jesus renames 彼得 (Peter), a name that means rock.",
+    17: "James and John, the sons of Zebedee, get the nickname 半尼其 (Boanerges) — it means sons of thunder.",
+    18: "Then eight more: Andrew, Philip, Bartholomew, Matthew, Thomas, James son of Alphaeus, Thaddaeus, and Simon the Zealot.",
+    19: "Last comes Judas Iscariot. Mark tells us straight away that this is the one who would hand Jesus over.",
+  },
   dict: {
     // ---- names & Bible terms ----
     '耶稣': { pinyin: 'Yēsū', meaning: 'Jesus', usage: 'The name of Jesus — the main person of this story. Chinese Bible names copy the sound of the original name.' },

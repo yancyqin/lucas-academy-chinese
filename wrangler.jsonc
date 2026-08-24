@@ -1,9 +1,15 @@
 {
   "name": "lucas-academy-chinese",
+  "main": "./worker/index.js",
   "compatibility_date": "2026-07-20",
   "assets": {
     "directory": ".",
-    "not_found_handling": "404-page"
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    // The lesson pages are plain assets; only the YouVersion proxy needs the
+    // Worker. Without this, a request for /api/* can be answered by the asset
+    // handler (404) before the Worker ever runs.
+    "run_worker_first": ["/api/*"]
   },
   "routes": [
     {

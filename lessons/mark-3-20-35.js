@@ -6,6 +6,8 @@ export default {
   tabTitle: 'Mark 3:20–35',
   title: '马可福音 3:20–35',
   subtitle: '和合本（神版） · Mark 3:20–35',
+  // YouVersion passage id for the English parallel: <book>.<chapter>.<verse>.
+  passage: { book: 'MRK', chapter: 3 },
 
   // Teacher-selected vocabulary for this passage. These seed the Wordbook;
   // student-marked (⭐) words are added to it automatically (duplicates removed).
@@ -67,6 +69,27 @@ export default {
   ],
 
   // Reuse the first lesson’s explanations, then add the vocabulary unique to v.20–35.
+
+  // Plain-English explanation of each whole verse, shown under the NIV line.
+  // Written for this app (the API supplies scripture text only), keyed by verse.
+  explain: {
+    20: "Back in a house, the crowd packs in again — so many people that Jesus cannot even stop to eat.",
+    21: "His own relatives come to take him home, because people are saying he has gone out of his mind (癫狂).",
+    22: "Teachers of the law come down from Jerusalem with a worse charge: that his power over demons comes from 别西卜 (Beelzebul), the prince of demons.",
+    23: "Jesus answers with a question of his own: how could Satan drive out Satan?",
+    24: "A kingdom that fights itself cannot stand.",
+    25: "Neither can a family that fights itself. 站立不住 = cannot keep standing.",
+    26: "So if Satan attacked Satan he would be finished. Their accusation makes no sense.",
+    27: "Here is the real picture: to carry off a strong man's things you have to tie him up first. Jesus is the one who has tied up the strong man.",
+    28: "「我实在告诉你们」 is how Jesus marks something important. Every sin and every insult can be forgiven.",
+    29: "But turning against the Holy Spirit — the very one who shows you that you need forgiveness — leaves no way back.",
+    30: "Mark explains why Jesus said it: they had called the Holy Spirit working in him an evil spirit.",
+    31: "His mother and brothers arrive, wait outside, and send someone in to call him.",
+    32: "The people sitting around him pass the message along: your mother and brothers are outside looking for you.",
+    33: "Jesus asks a surprising question back: who is my mother? Who are my brothers?",
+    34: "He looks round at the people sitting there and says, here are my mother and my brothers.",
+    35: "For Jesus, family is anyone who does what God wants. 遵行神旨意 = to carry out God's will.",
+  },
   dict: {
     ...mark3.dict,
     '屋子': { pinyin: 'wūzi', meaning: 'house; room', usage: '耶稣进了一个屋子 = Jesus went into a house.' },
