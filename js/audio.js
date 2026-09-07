@@ -1,7 +1,7 @@
 // Prerecorded narration (a real human-sounding voice, already read slowly).
 // Used for whole verses when a lesson has recordings; single words and lessons
 // without recordings keep using the browser's speech synthesis.
-import { stop as stopSpeech } from './speech.js?v=6';
+import { stop as stopSpeech } from './speech.js?v=7';
 
 // One shared element for the whole page, so starting a verse always replaces
 // whatever was playing — rapid taps can never stack two voices.
@@ -10,6 +10,11 @@ let player = null;
 // A generation counter so a late error from a superseded verse cannot trigger
 // the fallback for the verse that is playing now.
 let gen = 0;
+
+// True while a recording is the sound on this page — playing or paused. It is
+// how pauseRecorded() knows whether the pause button belongs to it or to the
+// speech synthesiser.
+let active = false;
 
 // Where a verse's recording lives. A verse may name its own file; otherwise the
 // path is derived from the lesson: assets/audio/<lesson id>/verse-NN.mp3.
@@ -24,7 +29,24 @@ export function verseAudioSrc(lesson, verse) {
 
 export function stopRecorded() {
   gen += 1;
+  active = false;
   if (player) player.pause();
+}
+
+// Hold the verse where it is; the next play continues from the same spot.
+// Returns false when a recording is not what is sounding, so the page can ask
+// the speech synthesiser instead.
+export function pauseRecorded() {
+  if (!active || !player || player.paused) return false;
+  player.pause();
+  return true;
+}
+
+export function resumeRecorded() {
+  if (!active || !player || !player.paused) return false;
+  const started = player.play();
+  if (started && typeof started.catch === 'function') started.catch(() => {});
+  return true;
 }
 
 // Play a recording from its start. Call this directly inside a click handler:
@@ -35,6 +57,7 @@ export function stopRecorded() {
 export function playRecorded(src, onFallback, onEnded) {
   stopSpeech(); // never let synthesis and a recording overlap
   gen += 1;
+  active = true;
   const mine = gen;
 
   if (!player) {
@@ -49,11 +72,14 @@ export function playRecorded(src, onFallback, onEnded) {
   const fallback = () => {
     if (spoke || mine !== gen) return;
     spoke = true;
+    active = false;
     onFallback();
   };
   player.onerror = fallback;
   player.onended = () => {
-    if (mine === gen && onEnded) onEnded();
+    if (mine !== gen) return;
+    active = false;
+    if (onEnded) onEnded();
   };
 
   // Re-assigning the same src does not rewind, so seek explicitly. Before any

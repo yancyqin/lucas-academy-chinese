@@ -1,15 +1,29 @@
-import { speak, speakSequence, stop } from './speech.js?v=6';
-import { playRecorded, stopRecorded, verseAudioSrc } from './audio.js?v=3';
+import { speak, speakSequence, stop, pause as pauseSpeech, resume as resumeSpeech } from './speech.js?v=7';
+import {
+  playRecorded,
+  stopRecorded,
+  pauseRecorded,
+  resumeRecorded,
+  verseAudioSrc,
+} from './audio.js?v=4';
 import { loadEnglish, englishVerse, englishAttribution, englishOffline, lessonHasEnglish } from './niv.js?v=1';
 import {
   isSupported as micSupported,
   hasClip,
-  clipUrl,
+  clipSeconds,
+  clipStored,
   startRecording,
   stopRecording,
   recordingNow,
-} from './record.js?v=1';
-import lessons from '../lessons/index.js?v=9';
+  recordingSeconds,
+  maxSeconds,
+  playClip,
+  pausePlaying as pauseClip,
+  resumePlaying as resumeClip,
+  stopPlaying as stopClip,
+  discard as discardClip,
+} from './record.js?v=2';
+import lessons from '../lessons/index.js?v=11';
 
 const PUNCT_RE = /^[，。、：；？！…—─（）《》「」『』""'',.!?;:()\-\s]+$/;
 const PINYIN_STORAGE_KEY = 'lucas-academy-chinese.pinyin-visible';
@@ -34,6 +48,13 @@ const panelExplain = document.getElementById('panel-explain');
 const pinyinToggle = document.getElementById('pinyin-toggle');
 const englishToggle = document.getElementById('english-toggle');
 const dictationToggle = document.getElementById('dictation-toggle');
+const panelPause = document.getElementById('btn-sentence-pause');
+const voiceBar = document.getElementById('voice');
+const voiceRecord = document.getElementById('voice-record');
+const voicePlay = document.getElementById('voice-play');
+const voicePause = document.getElementById('voice-pause');
+const voiceDelete = document.getElementById('voice-delete');
+const voiceStatus = document.getElementById('voice-status');
 const highlightButton = document.getElementById('btn-highlight');
 const unhighlightButton = document.getElementById('btn-unhighlight');
 const wordbookEl = document.getElementById('wordbook');
@@ -47,10 +68,9 @@ let current = null; // { word, sentence }
 let highlightedWords = readHighlights();
 let wordbookMinimized = readWordbookMinimized();
 
-// The English-parallel and record controls of the lesson on screen, by verse
-// number, so an English line arriving from the network (or a finished recording)
-// can be dropped straight into the right row.
-let verseRows = new Map(); // n -> { verse, en, explain, mine, record }
+// The English-parallel rows of the lesson on screen, by verse number, so a line
+// arriving from the network can be dropped straight into the right one.
+let verseRows = new Map(); // n -> { verse, row, en, explain }
 
 function readHighlights() {
   try {
@@ -189,8 +209,8 @@ function renderCredit() {
 // ---------- 默写 (dictation) ----------
 // Hides the Chinese text so the reader can write it down from audio — the verse
 // read aloud (🔊 at speed, 🐢 word by word), or their own recording — and reveal
-// it to check. Session only, like the recordings: a mode with nothing recorded
-// yet would only confuse.
+// it to check. The mode itself is never restored on load: a page that opens with
+// its text blanked out looks broken to whoever picks the iPad up next.
 function setDictation(on) {
   document.body.classList.toggle('dictation', on);
   dictationToggle.checked = on;
@@ -199,69 +219,127 @@ function setDictation(on) {
   } else {
     // A 🐢 read still running would keep talking with its ⏹ now hidden. Only
     // that button belongs to this mode — a verse playing from 🔊 is left alone.
-    if (playingButton && playingButton.classList.contains('verse-slow')) stopVerse();
+    if (playingButton && playingButton.classList.contains('verse-slow')) stopSound();
     document.querySelectorAll('.verse.revealed').forEach(row => row.classList.remove('revealed'));
   }
 }
 
 // ---------- your own voice ----------
-// Session-only recordings, one verse at a time; the recording button shows ⏹.
-let recordingButton = null;
+// One recording for the whole app, kept in local storage: it is still there
+// after the iPad is closed, and a new take replaces it — there is only ever one.
+// The controls live in the header, above every lesson, because the clip belongs
+// to the reader and not to any single verse.
+let recordTicker = null;
+let deleteArmed = null; // 🗑 asks once before it throws the take away
 
-function clipKey(lesson, verse) {
-  return `${lesson.id}:${verse.n}`;
+function formatSeconds(total) {
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
 }
 
-function markRecording(button) {
-  clearRecording();
-  recordingButton = button;
-  button.textContent = button.dataset.stopLabel;
-  button.title = 'Stop recording';
-  button.classList.add('recording');
+function renderVoice() {
+  const saved = hasClip();
+  voiceRecord.hidden = !micSupported();
+  voicePlay.hidden = !saved;
+  voiceDelete.hidden = !saved;
+  // With no microphone and nothing recorded there is nothing here to use.
+  voiceBar.hidden = !micSupported() && !saved;
+  disarmDelete();
+  if (recordingNow()) return; // the live counter owns the status line
+  if (!saved) {
+    voiceStatus.textContent = '';
+    return;
+  }
+  voiceStatus.textContent = clipStored()
+    ? `${formatSeconds(clipSeconds())} saved`
+    : `${formatSeconds(clipSeconds())} — too long to keep, this visit only`;
 }
 
-function clearRecording(button) {
-  if (!recordingButton || (button && button !== recordingButton)) return;
-  recordingButton.textContent = recordingButton.dataset.idleLabel;
-  recordingButton.title = recordingButton.dataset.idleTitle;
-  recordingButton.classList.remove('recording');
-  recordingButton = null;
+function markRecordingState() {
+  voiceRecord.textContent = voiceRecord.dataset.stopLabel;
+  voiceRecord.title = 'Stop recording';
+  voiceRecord.classList.add('recording');
+  const tick = () => {
+    voiceStatus.textContent = `${formatSeconds(recordingSeconds())} · recording (up to ${formatSeconds(maxSeconds)})`;
+  };
+  tick();
+  clearInterval(recordTicker);
+  recordTicker = setInterval(tick, 500);
+}
+
+function clearRecordingState() {
+  clearInterval(recordTicker);
+  recordTicker = null;
+  voiceRecord.textContent = voiceRecord.dataset.idleLabel;
+  voiceRecord.title = voiceRecord.dataset.idleTitle;
+  voiceRecord.classList.remove('recording');
 }
 
 // Same button starts and stops. Called straight from the click so iOS still
 // counts it as a gesture when the microphone prompt appears.
-function toggleRecording(lesson, verse, row) {
-  const key = clipKey(lesson, verse);
-  if (recordingNow() === key) {
+function toggleRecording() {
+  if (recordingNow()) {
     stopRecording();
     return;
   }
-  stopVerse(); // never record the app's own voice back through the speaker
-  row.note.hidden = true;
-  markRecording(row.record);
-  startRecording(key, {
+  stopSound(); // never record the app's own voice back through the speaker
+  markRecordingState();
+  startRecording({
     onDone: () => {
-      clearRecording(row.record);
-      row.mine.hidden = !hasClip(key);
+      clearRecordingState();
+      renderVoice();
     },
-    onError: () => {
-      clearRecording(row.record);
-      row.note.textContent = 'No microphone here — needs https and permission.';
-      row.note.hidden = false;
+    onError: reason => {
+      clearRecordingState();
+      renderVoice();
+      voiceStatus.textContent =
+        reason === 'mic'
+          ? 'No microphone here — needs https and permission.'
+          : 'That take did not record — try again.';
     },
   });
 }
 
-function toggleMine(lesson, verse, row) {
-  const url = clipUrl(clipKey(lesson, verse));
-  if (!url) return;
-  if (playingButton === row.mine) {
-    stopVerse();
+function togglePlayback() {
+  if (playingButton === voicePlay) {
+    stopSound();
     return;
   }
-  stopVerse();
-  markPlaying(row.mine);
-  playRecorded(url, () => clearPlaying(row.mine), () => clearPlaying(row.mine));
+  stopSound();
+  markPlaying(voicePlay, voicePause);
+  const started = playClip({
+    onEnded: () => clearPlaying(voicePlay),
+    onError: () => {
+      clearPlaying(voicePlay);
+      voiceStatus.textContent = 'That recording could not be played.';
+    },
+  });
+  if (!started) clearPlaying(voicePlay);
+}
+
+// One tap arms, the next throws it away — a recording that survives the day is
+// worth one question, and a dialog box is not the way to ask a child.
+function armDelete() {
+  voiceDelete.textContent = voiceDelete.dataset.armedLabel;
+  voiceDelete.classList.add('armed');
+  clearTimeout(deleteArmed);
+  deleteArmed = setTimeout(disarmDelete, 4000);
+}
+
+function disarmDelete() {
+  clearTimeout(deleteArmed);
+  deleteArmed = null;
+  voiceDelete.textContent = voiceDelete.dataset.idleLabel;
+  voiceDelete.classList.remove('armed');
+}
+
+function toggleDelete() {
+  if (!deleteArmed) {
+    armDelete();
+    return;
+  }
+  if (playingButton === voicePlay) stopSound();
+  discardClip();
+  renderVoice();
 }
 
 function readWordbookMinimized() {
@@ -298,12 +376,13 @@ function initToggleButton(button, stopLabel) {
   button.dataset.stopLabel = stopLabel;
 }
 
-function markPlaying(button) {
+function markPlaying(button, pauseFor) {
   if (playingButton !== button) clearPlaying();
   playingButton = button;
   button.textContent = button.dataset.stopLabel;
   button.title = 'Stop';
   button.classList.add('playing');
+  showPause(pauseFor);
 }
 
 // Put the button back. With an argument it only clears that button, so a stale
@@ -314,63 +393,141 @@ function clearPlaying(button) {
   playingButton.title = playingButton.dataset.idleTitle;
   playingButton.classList.remove('playing');
   playingButton = null;
+  hidePause();
 }
 
-// Stop whatever verse is sounding, recorded or synthesized.
-function stopVerse() {
+// ---------- the pause switch ----------
+// Only one sound plays at a time, so one switch is enough. It appears next to
+// whatever started the sound — the verse in the text, the sentence in the word
+// panel, the reader's own recording in the header — and it holds the reading
+// where it is instead of dropping it: the next tap goes on from that word.
+// ⏹ still stops for good; this is the extra control, not a replacement.
+let pauseButton = null;
+let soundPaused = false;
+
+// Whichever player is sounding answers; the other two say no.
+function pauseSound() {
+  return pauseRecorded() || pauseClip() || pauseSpeech();
+}
+
+function resumeSound() {
+  return resumeRecorded() || resumeClip() || resumeSpeech();
+}
+
+function showPause(button) {
+  if (pauseButton && pauseButton !== button) hidePause();
+  if (!button) return;
+  pauseButton = button;
+  soundPaused = false;
+  restPause(button);
+  button.classList.add('showing');
+}
+
+function hidePause() {
+  if (!pauseButton) return;
+  restPause(pauseButton);
+  pauseButton.classList.remove('showing');
+  pauseButton = null;
+  soundPaused = false;
+}
+
+function restPause(button) {
+  button.textContent = button.dataset.pauseLabel;
+  button.title = 'Pause';
+  button.classList.remove('paused');
+}
+
+function initPauseButton(button, pauseLabel, resumeLabel) {
+  button.dataset.pauseLabel = pauseLabel;
+  button.dataset.resumeLabel = resumeLabel;
+  button.textContent = pauseLabel;
+  button.title = 'Pause';
+  button.addEventListener('click', togglePause);
+  return button;
+}
+
+function togglePause() {
+  if (!pauseButton) return;
+  if (soundPaused) {
+    resumeSound();
+    soundPaused = false;
+    restPause(pauseButton);
+    return;
+  }
+  // Nothing to hold — the reading just ended between the tap and here. Leave
+  // the switch as it is; the ⏹ button will clear it.
+  if (!pauseSound()) return;
+  soundPaused = true;
+  pauseButton.textContent = pauseButton.dataset.resumeLabel;
+  pauseButton.title = 'Resume';
+  pauseButton.classList.add('paused');
+}
+
+// Stop everything that can make sound: a recorded verse, the synthesized voice,
+// and the reader's own clip. One voice at a time on this page.
+function stopSound() {
   stopRecorded();
   stop();
+  stopClip();
   clearPlaying();
+  hidePause();
 }
 
 // Words are always synthesized; a recorded verse would drown them out, so any
 // single-word playback stops the verse first.
 function say(text, rate) {
-  stopVerse();
+  stopSound();
   speak(text, rate);
 }
 
-function saySequence(parts, rate, gapMs) {
-  stopVerse();
-  speakSequence(parts, rate, gapMs);
+// `pauseFor` is the pause switch to offer while this reading runs — whole
+// sentences get one, single words are over too quickly to need it.
+function saySequence(parts, rate, gapMs, pauseFor) {
+  stopSound();
+  showPause(pauseFor);
+  speakSequence(parts, rate, gapMs, () => {
+    if (pauseFor && pauseButton === pauseFor) hidePause();
+  });
 }
 
 // Whole verse: play the recording when the lesson has one, otherwise speak it.
 // A failed download falls back to synthesis so the verse is never silent.
-function playVerse(lesson, verse, button) {
+function playVerse(lesson, verse, button, pauseFor) {
   const sentence = verse.tokens.join('');
   const src = verseAudioSrc(lesson, verse);
-  markPlaying(button);
+  markPlaying(button, pauseFor);
   if (!src) {
-    speakVerse(sentence, button);
+    speakVerse(sentence, button, pauseFor);
     return;
   }
-  playRecorded(src, () => speakVerse(sentence, button), () => clearPlaying(button));
+  playRecorded(src, () => speakVerse(sentence, button, pauseFor), () => clearPlaying(button));
 }
 
-function speakVerse(sentence, button) {
+function speakVerse(sentence, button, pauseFor) {
   stopRecorded();
-  markPlaying(button); // the fallback path arrives here after markPlaying already ran
+  // The fallback path arrives here after markPlaying already ran; calling it
+  // again keeps the pause switch pointed at a reading that is starting over.
+  markPlaying(button, pauseFor);
   speak(sentence, 0.85, () => clearPlaying(button));
 }
 
 // The same button starts and stops the verse.
-function toggleVerse(lesson, verse, button) {
-  if (playingButton === button) stopVerse();
-  else playVerse(lesson, verse, button);
+function toggleVerse(lesson, verse, button, pauseFor) {
+  if (playingButton === button) stopSound();
+  else playVerse(lesson, verse, button, pauseFor);
 }
 
 // 默写: the verse read word by word with a pause between words, so it can be
 // written down while the text is hidden — the same 🐢 pacing as the panel's slow
 // sentence (iOS clamps the rate, so the gap is what makes it slow enough to
 // write from). Always synthesized: a narration file cannot be split into words.
-function toggleSlowVerse(verse, button) {
+function toggleSlowVerse(verse, button, pauseFor) {
   if (playingButton === button) {
-    stopVerse();
+    stopSound();
     return;
   }
-  stopVerse();
-  markPlaying(button);
+  stopSound();
+  markPlaying(button, pauseFor);
   speakSequence(verse.tokens.filter(t => !PUNCT_RE.test(t)), 0.55, 500, () =>
     clearPlaying(button),
   );
@@ -384,14 +541,15 @@ document.getElementById('btn-say').addEventListener('click', () => current && sa
 document.getElementById('btn-slow').addEventListener('click', () => current && saySequence([...current.word], 0.5, 350));
 const sentenceButton = document.getElementById('btn-sentence');
 initToggleButton(sentenceButton, '⏹ Stop');
+initPauseButton(panelPause, '⏸ Pause', '▶️ Resume');
 sentenceButton.addEventListener('click', () => {
   if (!current) return;
   // current.verse is null only for a Wordbook word that this lesson never uses.
-  if (current.verse) toggleVerse(activeLesson, current.verse, sentenceButton);
+  if (current.verse) toggleVerse(activeLesson, current.verse, sentenceButton, panelPause);
   else say(current.sentence, 0.85);
 });
 // Slow whole-sentence: read the verse word by word with a pause between words.
-document.getElementById('btn-sentence-slow').addEventListener('click', () => current && saySequence(current.words, 0.55, 300));
+document.getElementById('btn-sentence-slow').addEventListener('click', () => current && saySequence(current.words, 0.55, 300, panelPause));
 pinyinToggle.addEventListener('change', () => setPinyinVisible(pinyinToggle.checked));
 englishToggle.addEventListener('change', () => setEnglishVisible(englishToggle.checked));
 dictationToggle.addEventListener('change', () => setDictation(dictationToggle.checked));
@@ -404,7 +562,7 @@ function closePanel() {
   if (selectedSpan) selectedSpan.classList.remove('selected');
   selectedSpan = null;
   current = null;
-  stopVerse();
+  stopSound();
 }
 
 function syncHighlightButtons() {
@@ -536,16 +694,9 @@ function el(tag, className, text) {
   return node;
 }
 
-function withChildren(node, ...children) {
-  node.append(...children);
-  return node;
-}
-
 function renderLesson(lesson) {
   activeLesson = lesson;
   closePanel();
-  stopRecording();
-  clearRecording();
   verseRows = new Map();
   contentEl.textContent = '';
 
@@ -584,7 +735,10 @@ function renderLesson(lesson) {
       const play = el('button', 'verse-play', '🔊');
       play.title = 'Play verse';
       initToggleButton(play, '⏹');
-      play.addEventListener('click', () => toggleVerse(lesson, v, play));
+      // Appears beside 🔊 only while this verse is sounding: hold the reading
+      // to write a line down, then let it go on from the same word.
+      const pause = initPauseButton(el('button', 'verse-pause'), '⏸', '▶️');
+      play.addEventListener('click', () => toggleVerse(lesson, v, play, pause));
 
       const text = el('span', 'verse-text');
       v.tokens.forEach((tok, i) => {
@@ -615,7 +769,7 @@ function renderLesson(lesson) {
       const slow = el('button', 'verse-slow', '🐢 Slower');
       slow.title = 'Read this verse slowly, word by word';
       initToggleButton(slow, '⏹ Stop');
-      slow.addEventListener('click', () => toggleSlowVerse(v, slow));
+      slow.addEventListener('click', () => toggleSlowVerse(v, slow, pause));
       body.append(slow);
 
       // Stands in for the hidden text in 默写 mode and reveals it to check.
@@ -632,26 +786,9 @@ function renderLesson(lesson) {
       explain.hidden = !explanation;
       body.append(en, explain);
 
-      // The reader's own controls come last, under the whole verse, so the
-      // Chinese line and its English stay next to each other.
-      const record = el('button', 'verse-record', '🎤 Record');
-      record.title = 'Record myself reading this verse';
-      initToggleButton(record, '⏹ Stop');
-      const mine = el('button', 'verse-mine', '🎧 Mine');
-      mine.title = 'Play my recording';
-      initToggleButton(mine, '⏹ Stop');
-      mine.hidden = !hasClip(clipKey(lesson, v));
-      const note = el('span', 'verse-note');
-      note.hidden = true;
-      // No microphone (or an http origin) means no working button to show.
-      if (micSupported()) body.append(withChildren(el('div', 'verse-tools'), record, mine, note));
+      verseRows.set(v.n, { verse: v, row, en, explain });
 
-      const nodes = { verse: v, row, en, explain, record, mine, note };
-      verseRows.set(v.n, nodes);
-      record.addEventListener('click', () => toggleRecording(lesson, v, nodes));
-      mine.addEventListener('click', () => toggleMine(lesson, v, nodes));
-
-      row.append(play, el('span', 'verse-num', String(v.n)), body);
+      row.append(play, pause, el('span', 'verse-num', String(v.n)), body);
       sec.append(row);
     });
 
@@ -739,10 +876,20 @@ lessons.forEach(lesson => {
 });
 tabsEl.append(el('span', 'tab soon', 'Next · soon'));
 
+initToggleButton(voiceRecord, '⏹ Stop');
+initPauseButton(voicePause, '⏸ Pause', '▶️ Resume');
+initToggleButton(voicePlay, '⏹ Stop');
+voiceDelete.dataset.idleLabel = voiceDelete.textContent;
+voiceDelete.dataset.armedLabel = '🗑 Delete it?';
+voiceRecord.addEventListener('click', toggleRecording);
+voicePlay.addEventListener('click', togglePlayback);
+voiceDelete.addEventListener('click', toggleDelete);
+renderVoice();
+
 restorePinyinPreference();
 restoreEnglishPreference();
-// A reload restores checkbox state on its own, but the recordings it was made
-// for are gone — so dictation always starts off.
+// A reload restores checkbox state on its own, but a page that opens with its
+// text hidden reads as broken — so dictation always starts off.
 setDictation(false);
 setWordbookMinimized(wordbookMinimized);
 selectLesson(location.hash.slice(1));

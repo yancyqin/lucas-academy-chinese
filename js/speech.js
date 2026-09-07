@@ -4,6 +4,13 @@ let zhVoice = null;
 // A generation counter so a newer request cancels any paced sequence still running.
 let gen = 0;
 
+// Pause state. `held` is the rest of a paced sequence, waiting in its gap for
+// the reader to resume; `running` says a sequence is mid-flight even during a
+// silent gap, when speechSynthesis itself reports nothing speaking.
+let paused = false;
+let held = null;
+let running = false;
+
 function pickVoice() {
   const voices = speechSynthesis.getVoices();
   zhVoice =
@@ -34,9 +41,8 @@ export function speak(text, rate = 0.9, onEnd) {
     if (onEnd) onEnd();
     return;
   }
-  gen += 1; // cancel any running paced sequence
+  reset(); // cancel any running paced sequence
   const mine = gen;
-  speechSynthesis.cancel();
   const u = utter(text, rate);
   if (onEnd) {
     u.onend = () => { if (mine === gen) onEnd(); };
@@ -55,14 +61,21 @@ export function speakSequence(parts, rate = 0.5, gapMs = 350, onDone) {
     if (onDone) onDone();
     return;
   }
-  gen += 1;
+  reset();
   const mine = gen;
-  speechSynthesis.cancel();
+  running = true;
   const items = parts.filter(p => p && p.trim());
   let i = 0;
   const next = () => {
     if (mine !== gen) return; // superseded
+    // Paused in the gap between two words: keep the rest of the verse here
+    // until resume() asks for it.
+    if (paused) {
+      held = next;
+      return;
+    }
     if (i >= items.length) {
+      running = false;
       if (onDone) onDone();
       return;
     }
@@ -80,6 +93,40 @@ export function speakSequence(parts, rate = 0.5, gapMs = 350, onDone) {
 
 export function stop() {
   if (!('speechSynthesis' in window)) return;
+  reset();
+}
+
+// Drop everything the previous read left behind. Cancelling a *paused* queue
+// wedges it in some browsers, so it is always resumed first.
+function reset() {
   gen += 1;
+  held = null;
+  running = false;
+  if (paused) {
+    paused = false;
+    speechSynthesis.resume();
+  }
   speechSynthesis.cancel();
+}
+
+// Hold the reading where it is. Mid-word the browser stops the voice itself;
+// mid-gap there is nothing to stop, so the sequence simply waits (see above).
+// Returns false when synthesis is not what is sounding, which is how the page
+// knows to ask the other players instead.
+export function pause() {
+  if (!('speechSynthesis' in window) || paused) return false;
+  if (!speechSynthesis.speaking && !running) return false;
+  paused = true;
+  speechSynthesis.pause();
+  return true;
+}
+
+export function resume() {
+  if (!('speechSynthesis' in window) || !paused) return false;
+  paused = false;
+  speechSynthesis.resume();
+  const rest = held;
+  held = null;
+  if (rest) rest();
+  return true;
 }

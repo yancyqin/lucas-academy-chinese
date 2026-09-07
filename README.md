@@ -6,6 +6,8 @@ on iPad) and see an English explanation — the word's meaning plus how it is us
 in that sentence. Whole sentences can be read alongside the **NIV** English text
 with a plain-language explanation, and in 默写 mode the text hides so a reader can
 write the verse back from the audio — the app reading it aloud, or their own voice.
+Any whole-sentence playback can be held with a **⏸ pause switch** and picked up
+from the same word.
 
 ## Run
 
@@ -26,6 +28,10 @@ npx wrangler dev --port 8098
 - Tap the 🔊 next to a verse to hear the whole verse. Mark 4 plays a recorded
   Mandarin narration read slowly for children; lessons without recordings use
   the browser's built-in voice, and so does every single-word playback.
+- While a verse is sounding, a **⏸** appears next to its 🔊 (and next to
+  **🔊 Sentence** in the word panel). It holds the reading where it is — the ▶️
+  it turns into goes on from the same word, whether the verse is a recording, the
+  browser's voice, or the word-by-word 🐢 read. ⏹ still stops for good.
 
 - Turn on **拼音** in the page header to show pinyin above every word. The preference is remembered on the device.
 - Turn on **English · NIV** to show, under each verse, the NIV English of the
@@ -35,19 +41,31 @@ npx wrangler dev --port 8098
 - Turn on **默写 · Dictation** to hide the Chinese text behind a ✍️ blank, and
   read it to yourself: the 🔊 beside the verse plays it at speed, **🐢 Slower**
   reads it word by word with a pause between words — slow enough to write from —
-  and 🎧 Mine still plays your own recording. Tap 🐢 again for another pass (while
-  it is reading, the same button stops it), write the verse down, then tap the
-  blank to check. This mode always starts off, because the recordings it goes
-  with last only for the session.
+  ⏸ holds it while you catch up, and 🎧 My reading in the header still plays your
+  own recording. Tap 🐢 again for another pass (while it is reading, the same
+  button stops it), write the verse down, then tap the blank to check. This mode
+  always starts off on load: a page that opens with its text hidden reads as
+  broken to whoever picks the iPad up next.
 - Tap a word, then choose **Mark** or **Unmark** in its word panel. Marked vocabulary stays highlighted across lessons and is saved in the browser’s local storage.
 
 ### Recording yourself
 
-Each verse has a **🎤 Record** button; after recording, **🎧 Mine** plays it back
-and 🎤 records a new take over it. Clips are held in memory for the session only
-— nothing is uploaded and nothing is written to storage, so they are gone on
-reload. The microphone needs a secure origin (https, or localhost) and the
-browser's permission; where it is unavailable the buttons are not shown.
+The header holds one recording for the whole app: **🎤 Record** starts and stops
+a take, **🎧 My reading** plays it back, ⏸ holds it, and **🗑 Delete** (which asks
+once) throws it away. A new take replaces the old one — there is only ever one
+clip, and it is kept in the browser's local storage, so it is still there after
+the window is closed. Nothing is ever uploaded.
+
+Playback levels itself: the clip is played through Web Audio, and the gain is
+measured from the recording (its average loudness away from silence) and capped
+at the peak a limiter can hold — a verse whispered at arm's length comes back as
+loud as one read into the microphone. An `<audio>` element could not do this; its
+volume only ever turns sound *down*.
+
+A take stops itself after 3 minutes, and one too big for local storage (about
+3.5 MB of it) still plays for the visit but is not kept. The microphone needs a
+secure origin (https, or localhost) and the browser's permission; where it is
+unavailable the 🎤 button is not shown, though a saved clip still plays.
 
 ## English parallel (NIV)
 
@@ -91,6 +109,8 @@ Production: <https://chinese.lucasacademy.org>
      lesson simply has no English parallel.
    - `paragraphs[]` — each has `artCaption` (shown on the placeholder),
      `artPrompt` (saved for generating the illustration later), and `verses[]`.
+     Add `artImage` (plus `artAlt`) once the picture exists; without it the
+     paragraph renders the placeholder box.
    - Each verse is `{ n, tokens: [...] }` — one word per token; punctuation is
      its own token (rendered non-clickable).
    - `dict` — one entry per distinct word: `{ pinyin, meaning, usage }`.
@@ -112,3 +132,5 @@ entry — check the console after adding a lesson.
 - **马可福音 3:1–19** (和合本 神版) — Mark 3:1–19
 - **马可福音 3:20–35** (和合本 神版) — Mark 3:20–35
 - **马可福音 4** (CUV 简体中文) — Mark 4
+- **马可福音 5** (CUV 简体中文) — Mark 5 · illustrations not generated yet, so
+  each of its six scenes shows the placeholder box with its `artPrompt` ready

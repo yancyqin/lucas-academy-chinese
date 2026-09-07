@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>中文阅读 · Lucas Academy</title>
-<link rel="stylesheet" href="css/style.css?v=9">
+<link rel="stylesheet" href="css/style.css?v=11">
 </head>
 <body>
 
@@ -23,6 +23,15 @@
       <input id="dictation-toggle" type="checkbox">
       <span>默写 · Dictation</span>
     </label>
+  </div>
+  <!-- One recording for the whole app: it is kept after the window is closed,
+       and a new take replaces it. -->
+  <div id="voice" class="voice">
+    <button id="voice-record" class="voice-btn" title="Record my reading">🎤 Record</button>
+    <button id="voice-play" class="voice-btn" title="Play my recording" hidden>🎧 My reading</button>
+    <button id="voice-pause" class="voice-btn pause-btn">⏸ Pause</button>
+    <button id="voice-delete" class="voice-btn voice-delete" title="Delete my recording" hidden>🗑 Delete</button>
+    <span id="voice-status" class="voice-status"></span>
   </div>
   <nav id="tabs" class="tabs"></nav>
 </header>
@@ -62,6 +71,7 @@
     <span class="sentence-buttons">
       <button id="btn-sentence" class="say">🔊 Sentence</button>
       <button id="btn-sentence-slow" class="say">🐢 Slower</button>
+      <button id="btn-sentence-pause" class="say pause-btn">⏸ Pause</button>
     </span>
     <span id="panel-sentence" class="panel-sentence"></span>
   </div>
@@ -71,6 +81,6 @@
   </div>
 </aside>
 
-<script type="module" src="js/app.js?v=14"></script>
+<script type="module" src="js/app.js?v=16"></script>
 </body>
 </html>
