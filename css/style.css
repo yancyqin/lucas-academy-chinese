@@ -302,6 +302,8 @@ body {
   margin: 10px 0;
 }
 
+/* Fixed width: 🔊/⏹ and ⏸/▶️ are different widths, and the verse line should
+   not slide sideways while it is being read. */
 .verse-play {
   border: none;
   background: none;
@@ -309,11 +311,36 @@ body {
   cursor: pointer;
   padding: 2px;
   flex: none;
+  min-width: 1.5em;
+  text-align: center;
 }
 
 /* while a verse is sounding, its button shows ⏹ on a soft pill */
 .verse-play.playing {
   background: #eaf4ee;
+  border-radius: 999px;
+}
+
+/* The pause switch sits next to 🔊 and only appears while that verse is
+   sounding. It keeps its space when hidden so the line never jumps sideways
+   in the middle of a reading. */
+.verse-pause {
+  visibility: hidden;
+  flex: none;
+  border: none;
+  background: none;
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 3px;
+  cursor: pointer;
+  min-width: 1.5em;
+  text-align: center;
+}
+
+.verse-pause.showing { visibility: visible; }
+
+.verse-pause.paused {
+  background: #fff4d7;
   border-radius: 999px;
 }
 
@@ -486,6 +513,15 @@ body.show-pinyin .word-pinyin { display: block; }
 
 .sentence-buttons .say { white-space: nowrap; }
 
+/* Shown only while something is sounding — there is nothing to pause otherwise. */
+.pause-btn { display: none; }
+.pause-btn.showing { display: inline-flex; }
+
+.pause-btn.paused {
+  background: #fff4d7;
+  color: #835019;
+}
+
 .panel-sentence {
   font-size: 1.15rem;
   line-height: 1.8;
@@ -551,16 +587,17 @@ body.show-english .verse-explain {
 }
 
 /* ---------- your own voice ---------- */
-.verse-tools {
+/* One recording for the whole app, so its controls live in the header with the
+   other things that belong to the reader rather than to a verse. */
+.voice {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
-.verse-record,
-.verse-mine {
+.voice-btn {
   border: 1.5px solid #e0d3b8;
   background: #fff;
   color: #6b5433;
@@ -572,24 +609,30 @@ body.show-english .verse-explain {
   cursor: pointer;
 }
 
-.verse-record:hover,
-.verse-mine:hover { background: #f8f1e0; }
+.voice-btn:hover { background: #f8f1e0; }
 
 /* while the microphone is live, the button shows ⏹ on a soft red pill */
-.verse-record.recording {
+.voice-btn.recording {
   background: #fdecec;
   border-color: #e8b4b4;
   color: #a5352f;
 }
 
-.verse-mine.playing {
+.voice-btn.playing {
   background: #eaf4ee;
   border-color: #a9cdb8;
 }
 
-.verse-note {
-  font-size: 0.82rem;
+/* 🗑 asks before it throws the recording away */
+.voice-delete.armed {
+  background: #fdecec;
+  border-color: #e8b4b4;
   color: #a5352f;
+}
+
+.voice-status {
+  font-size: 0.82rem;
+  color: #a08c67;
 }
 
 /* ---------- 默写 (dictation) ---------- */
