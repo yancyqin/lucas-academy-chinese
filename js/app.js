@@ -23,7 +23,7 @@ import {
   stopPlaying as stopClip,
   discard as discardClip,
 } from './record.js?v=2';
-import lessons from '../lessons/index.js?v=11';
+import lessons from '../lessons/index.js?v=12';
 
 const PUNCT_RE = /^[，。、：；？！…—─（）《》「」『』""'',.!?;:()\-\s]+$/;
 const PINYIN_STORAGE_KEY = 'lucas-academy-chinese.pinyin-visible';

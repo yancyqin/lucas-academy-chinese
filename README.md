@@ -132,5 +132,5 @@ entry — check the console after adding a lesson.
 - **马可福音 3:1–19** (和合本 神版) — Mark 3:1–19
 - **马可福音 3:20–35** (和合本 神版) — Mark 3:20–35
 - **马可福音 4** (CUV 简体中文) — Mark 4
-- **马可福音 5** (CUV 简体中文) — Mark 5 · illustrations not generated yet, so
-  each of its six scenes shows the placeholder box with its `artPrompt` ready
+- **马可福音 5** (CUV 简体中文) — Mark 5 · six scene illustrations, with the
+  original `artPrompt` descriptions retained in the lesson

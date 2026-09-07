@@ -1,9 +1,8 @@
 // 马可福音 5 · 和合本简体中文（CUV）
 // Scripture text is grouped into natural reading scenes; punctuation stays non-clickable.
 //
-// Illustrations are not generated yet. Each scene below keeps its artPrompt and
-// artAlt ready and leaves the picture slot empty, so the lesson renders the
-// placeholder box until a file is dropped in at the path named in the comment.
+// Each scene includes its illustration, with the original artPrompt and artAlt
+// retained as the scene description and accessible image text.
 import mark4 from './mark-4.js?v=6';
 
 // [word, pinyin, meaning] — a fourth item replaces the generic usage note where
@@ -113,8 +112,7 @@ export default {
     {
       id: 'p1',
       artCaption: '坟茔里的人 · The man among the tombs (v.1–8)',
-      // Picture slot — add the file, then uncomment:
-      // artImage: 'assets/illustrations/mark-5-01-08.jpg',
+      artImage: 'assets/illustrations/mark-5-01-08.jpg',
       artAlt: '清晨的岩石山坡上有石洞坟茔，一个孤单的人朝刚下船的耶稣跑来，地上散着断开的铁链。',
       artPrompt: 'Warm children\'s picture-book illustration, no text, nothing frightening: dawn on a rocky hillside above a lake, cave tombs in the rock, broken chains lying on the ground, a lonely ragged man running down toward Jesus who has just stepped out of a small boat. Gentle faces, hopeful morning light.',
       verses: [
@@ -131,7 +129,7 @@ export default {
     {
       id: 'p2',
       artCaption: '「群」和猪群 · Legion and the pigs (v.9–13)',
-      // artImage: 'assets/illustrations/mark-5-09-13.jpg',
+      artImage: 'assets/illustrations/mark-5-09-13.jpg',
       artAlt: '山坡上一大群猪在吃食，远处的海边站着耶稣和那个跪着的人。',
       artPrompt: 'Bright paper-cut collage for children, no text: a green hillside above a blue lake with a big herd of pigs feeding, and further down the slope Jesus standing calmly beside a kneeling man. Bold layered shapes, no scary or violent detail.',
       verses: [
@@ -145,7 +143,7 @@ export default {
     {
       id: 'p3',
       artCaption: '回家去传扬 · Sent home to tell (v.14–20)',
-      // artImage: 'assets/illustrations/mark-5-14-20.jpg',
+      artImage: 'assets/illustrations/mark-5-14-20.jpg',
       artAlt: '那人穿好衣服、心里明白过来，坐在耶稣旁边；城里的人远远站着观看。',
       artPrompt: 'Gentle colored-pencil illustration for children, no text: the once-wild man now washed, dressed and calm, sitting beside Jesus on the shore, while townspeople stand at a distance watching, and in the corner the same man later talking happily to families in a village. Soft textures, kind expressions.',
       verses: [
@@ -161,7 +159,7 @@ export default {
     {
       id: 'p4',
       artCaption: '睚鲁的恳求 · Jairus kneels (v.21–24)',
-      // artImage: 'assets/illustrations/mark-5-21-24.jpg',
+      artImage: 'assets/illustrations/mark-5-21-24.jpg',
       artAlt: '海边挤满了人，管会堂的睚鲁跪在耶稣脚前恳求他。',
       artPrompt: 'Ink-and-watercolor scene for children, no text: a crowded lakeshore, a well-dressed synagogue leader kneeling at Jesus\'s feet with both hands raised in pleading, the crowd pressing in around them. Expressive lines, warm afternoon colors, urgent but not frightening.',
       verses: [
@@ -174,7 +172,7 @@ export default {
     {
       id: 'p5',
       artCaption: '摸耶稣衣裳的女人 · The woman who touched his cloak (v.25–34)',
-      // artImage: 'assets/illustrations/mark-5-25-34.jpg',
+      artImage: 'assets/illustrations/mark-5-25-34.jpg',
       artAlt: '拥挤的人群中，一个女人从后面伸手轻轻摸耶稣的衣裳，耶稣转过身来看她。',
       artPrompt: 'Tender children\'s illustration, no text: inside a pressing crowd, a woman reaches out from behind and touches the hem of Jesus\'s robe with her fingertips; Jesus is turning around to look for her with a kind face. Soft golden light on the two of them, the crowd in gentle shadow.',
       verses: [
@@ -193,7 +191,7 @@ export default {
     {
       id: 'p6',
       artCaption: '「大利大，古米！」 · Talitha koum (v.35–43)',
-      // artImage: 'assets/illustrations/mark-5-35-43.jpg',
+      artImage: 'assets/illustrations/mark-5-35-43.jpg',
       artAlt: '安静的房间里，耶稣拉着小女孩的手，女孩正要起来，父母在旁边惊奇地看着。',
       artPrompt: 'Quiet, luminous children\'s illustration, no text: a small bedroom in an ancient house at dawn, Jesus holding a twelve-year-old girl\'s hand as she sits up in bed, her mother and father watching in wonder, three disciples in the doorway. Peaceful colors, morning light through the window, joy rather than sorrow.',
       verses: [

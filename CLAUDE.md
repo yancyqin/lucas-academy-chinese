@@ -41,8 +41,7 @@ when working on the English parallel (that half needs the Worker).
   usage) + `explain` (verse number → plain-English explanation, written by hand)
   + `passage` (`{ book, chapter }`, the YouVersion id parts). A paragraph with
   `artImage` shows the picture; without one it renders the placeholder box and
-  keeps its `artPrompt` ready (that is Mark 5's state — its six slots are
-  commented in the file with the path each picture goes to).
+  keeps its `artPrompt` ready. Mark 5 includes all six scene illustrations.
 
 ## Gotchas / conventions
 
